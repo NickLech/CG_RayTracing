@@ -18,3 +18,8 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 # Include sub-projects.
 add_subdirectory ("CG_Raytracing")
 
+if(WIN32) 
+	#Force glew to output the shared lib to the same path as the executable
+	set_property(TARGET libglew_shared PROPERTY RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+endif()
+
