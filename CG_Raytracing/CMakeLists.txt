@@ -20,7 +20,20 @@ if(WIN32)
 	#add_subdirectory("${glew_SOURCE_DIR}/build/cmake" "${glew_BINARY_DIR}" SYSTEM)
 	set(glew-cmake_BUILD_STATIC ON)
 	set(ONLY_LIBS ON)
-endif(WIN32)
+    target_link_libraries(CG_Raytracing PUBLIC SDL3::SDL3-shared)
+    target_link_libraries(CG_Raytracing PUBLIC libglew_static)
 
-target_link_libraries(CG_Raytracing PUBLIC SDL3::SDL3-shared)
-target_link_libraries(CG_Raytracing PUBLIC libglew_static)
+elseif(UNIX)
+    find_package(SDL3 REQUIRED)
+    find_package(GLEW REQUIRED)
+    find_package(OpenGL REQUIRED)
+
+    target_link_libraries(CG_Raytracing PRIVATE 
+        SDL3::SDL3 
+        GLEW::GLEW 
+        OpenGL::GL
+    )
+
+endif()
+
+
