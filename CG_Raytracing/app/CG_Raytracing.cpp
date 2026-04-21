@@ -7,10 +7,12 @@
 #include <GL/glew.h>
 
 #include <Shader.hpp>
+#include <GLContext.hpp>
 
 #include <format>
 #include <iostream>
 #include <filesystem>
+#include <bit>
 
 void __stdcall DebugCallback(GLenum source,
 	GLenum type,
@@ -46,7 +48,15 @@ int main() {
 		std::exit(1);
 	}
 
-	SDL_GL_MakeCurrent(window, context);
+	using SetContextFun = cg_raytracing::GLContextWrapper::SetContextFun;
+	// Regarding the function pointer cast: even though the signature is different, 
+	// the underlying memory for the arguments is the exact same. In my opinion,
+	// this is allowed
+	auto gl_ctx = cg_raytracing::GLContextWrapper::CreateWrapper(context, std::bit_cast<SetContextFun>((void*)SDL_GL_MakeCurrent));
+	if (!gl_ctx.MakeCurrent((void*)window)) {
+		std::println(std::cout, "SDL_GL_MakeCurrent() error: {}", SDL_GetError());
+		std::exit(1);
+	}
 
 	glewExperimental = true;
 	auto error = glewInit();
@@ -72,8 +82,8 @@ int main() {
 		{"./assets/main.frag", ShaderStage::FRAGMENT}
 	}).value();
 
-	glDisable(GL_SCISSOR_TEST);
-	glDisable(GL_BLEND);
+	gl_ctx.SetBlendEnable(false);
+	gl_ctx.SetScissorEnable(false);
 
 	glEnable(GL_DEBUG_OUTPUT);
 	glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
