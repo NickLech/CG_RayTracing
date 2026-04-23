@@ -188,9 +188,7 @@ namespace cg_raytracing {
 		std::vector<VertexAttribute> _attribs, 
 		uint32_t _attrib_divisor, 
 		size_t _init_size) {
-		auto ctx = GetCurrentGLContext();
-		Bind();
-
+		// First create underlying buffer
 		auto buf_temp = GpuBuffer::CreateBuffer(_init_size * _attrib_size, 
 			BufferMapping::WRITE | 
 			BufferMapping::PERSISTENT | 
@@ -200,21 +198,31 @@ namespace cg_raytracing {
 		if (!buf_temp.has_value()) {
 			return buf_temp.error();
 		}
-		m_buffers.push_back( std::move(buf_temp.value()) );
-		detail::SetCurrentArrayBuffer(m_buffers.back().GetBufferId());
+		// Assign to temporary, do not push to m_buffers
+		auto buf = std::move(buf_temp.value());
+
+		// Attempt to host map the new buffer
+		// If mapping fails, the vertex buffer
+		// state has not been changed in any
+		// way, all class invariants are respected
+		auto maybe_err = buf.MapBuffer(0, buf.GetBufferSize(),
+			BufferMapping::WRITE | BufferMapping::PERSISTENT | BufferMapping::COHERENT);
+		if (maybe_err.has_value()) {
+			return maybe_err.value();
+		}
+
+		auto ctx = GetCurrentGLContext();
+		Bind();
+		detail::SetCurrentArrayBuffer(buf.GetBufferId());
 
 		m_curr_attrib_index = detail::SetVertexAttributes(_attribs, _attrib_divisor, (uint32_t)_attrib_size, 
 			m_curr_attrib_index);
 
 		detail::SetCurrentArrayBuffer(0);
 		ctx->BindVao(0);
-
-		auto maybe_err = m_buffers.back().MapBuffer(0, m_buffers.back().GetBufferSize(),
-			BufferMapping::WRITE | BufferMapping::PERSISTENT | BufferMapping::COHERENT);
-		if (maybe_err.has_value()) {
-			return maybe_err.value();
-		}
-
+		
+		// We can now modify the vertex buffer state
+		m_buffers.push_back(std::move(buf));
 		m_buf_sizes.push_back(0);
 		m_attrib_types.push_back(_attrib_type);
 		m_attrib_sizes.push_back(_attrib_size);
