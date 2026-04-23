@@ -10,7 +10,7 @@ namespace cg_raytracing {
 		/// optimization and/or remove useless
 		/// compiler warnings
 		/// </summary>
-		void Unreachable() {
+		static void Unreachable() {
 #if defined(_MSC_VER)
 			__assume(false);
 #elif defined(__GNUC__) || defined(__clang__)

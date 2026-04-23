@@ -7,10 +7,14 @@
 #include <GL/glew.h>
 
 #include <Shader.hpp>
+#include <GLContext.hpp>
+#include <VertexBuffer.hpp>
+#include <IndexBuffer.hpp>
 
 #include <format>
 #include <iostream>
 #include <filesystem>
+#include <bit>
 
 void __stdcall DebugCallback(GLenum source,
 	GLenum type,
@@ -22,6 +26,19 @@ void __stdcall DebugCallback(GLenum source,
 	std::string msg{ message, (size_t)length };
 	std::println(std::cout, "{}", message);
 }
+
+struct Vertex2D {
+#pragma pack(push, 1)
+	float x, y;
+#pragma pack(pop)
+
+	std::vector<cg_raytracing::VertexAttribute> attributes() const {
+		return {
+			cg_raytracing::VertexAttribute{ cg_raytracing::VertexAttributeType::FLOAT, (char*)&x - (char*)this },
+			cg_raytracing::VertexAttribute{ cg_raytracing::VertexAttributeType::FLOAT, (char*)&y - (char*)this }
+		};
+	}
+};
 
 int main() {
 	if (!SDL_Init(SDL_INIT_VIDEO)) {
@@ -46,7 +63,15 @@ int main() {
 		std::exit(1);
 	}
 
-	SDL_GL_MakeCurrent(window, context);
+	using SetContextFun = cg_raytracing::GLContextWrapper::SetContextFun;
+	// Regarding the function pointer cast: even though the signature is different, 
+	// the underlying memory for the arguments is the exact same. In my opinion,
+	// this is allowed
+	auto gl_ctx = cg_raytracing::GLContextWrapper::CreateWrapper(context, std::bit_cast<SetContextFun>((void*)SDL_GL_MakeCurrent));
+	if (!gl_ctx.MakeCurrent((void*)window)) {
+		std::println(std::cout, "SDL_GL_MakeCurrent() error: {}", SDL_GetError());
+		std::exit(1);
+	}
 
 	glewExperimental = true;
 	auto error = glewInit();
@@ -72,12 +97,36 @@ int main() {
 		{"./assets/main.frag", ShaderStage::FRAGMENT}
 	}).value();
 
-	glDisable(GL_SCISSOR_TEST);
-	glDisable(GL_BLEND);
+	gl_ctx.SetBlendEnable(false);
+	gl_ctx.SetScissorEnable(false);
 
 	glEnable(GL_DEBUG_OUTPUT);
 	glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
 	glDebugMessageCallback(DebugCallback, nullptr);
+
+	auto vert_buf = cg_raytracing::VertexBuffer::CreateVertexBuffer().value();
+	vert_buf.AddBuffer<Vertex2D>(0, 4);
+
+	auto index_buf = cg_raytracing::IndexBuffer::CreateIndexBuffer(6).value();
+
+	constexpr float VERTICES[4][2] = { 
+		{ -1.0, 1.0, },
+		{ 1.0, 1.0, },
+		{ -1.0, -1.0, },
+		{ 1.0, -1.0 }
+	};
+
+	constexpr float INDICES[6] = { 0, 1, 2, 2, 1, 3 };
+
+	for (size_t i = 0; i < 4; i++) {
+		vert_buf.PushVertexDataTyped(0, Vertex2D{ .x = VERTICES[i][0], .y = VERTICES[i][1] });
+	}
+
+	for (size_t i = 0; i < 6; i++) {
+		index_buf.PushIndex(INDICES[i]);
+	}
+
+	vert_buf.Bind();
 
 	bool close = false;
 	while (!close) {

@@ -1,5 +1,6 @@
 #include <Shader.hpp>
 #include <Utility.hpp>
+#include <GLContext.hpp>
 
 #include <format>
 #include <fstream>
@@ -24,6 +25,9 @@ namespace cg_raytracing {
 			common::Unreachable();
 			break;
 		}
+
+		common::Unreachable();
+		return GLuint(-1);
 	}
 
 	Shader::Shader(Shader&& _prev) noexcept :
@@ -137,12 +141,19 @@ namespace cg_raytracing {
 	}
 
 	void Shader::Bind() {
-		glUseProgram(m_program_id);
+		auto gl_ctx = GetCurrentGLContext();
+		gl_ctx->BindProgram(m_program_id);
 	}
 
 	Shader::~Shader() {
-		//Unbind all programs
-		glUseProgram(0);
+		auto gl_ctx = GetCurrentGLContext();
+		// If the current bound program is managed
+		// by this object, we should unbind it
+		// to prevent delayed shader deletion
+		if (gl_ctx->GetCurrentProgram() == m_program_id) {
+			gl_ctx->BindProgram(0);
+		}
+
 		if (0 != m_program_id) {
 			glDeleteProgram(m_program_id);
 		}
