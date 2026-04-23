@@ -59,7 +59,7 @@ namespace cg_raytracing {
 
 		/// <summary>
 		/// Create GPU buffer with the given allocated
-		/// size and usage hint. Memory will be uninitialized
+		/// size and protections. Memory will be uninitialized
 		/// </summary>
 		/// <param name="_size_bytes">Size in bytes of the buffer</param>
 		/// <param name="_prots">Buffer storage protection flags</param>

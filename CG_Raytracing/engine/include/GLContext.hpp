@@ -128,7 +128,10 @@ namespace cg_raytracing {
 		PUSH_FAILED_INVALID_BUFFER,    // Attempting to push data to invalid buffer inside a vertex buffer
 		PUSH_FAILED_TYPE_MISMATCH,     // Attempting to push data to buffer inside a vertex buffer with an incorrect type
 		PUSH_FAILED_SIZE_MISMATCH,     // Attempting to push data to buffer inside a vertex buffer with an incorrect size
-		COPY_FAILED_BUFFER_MAPPED      // Attempting to copy a buffer to another while one of them was mapped or they do not have the PERSISTENT flag set
+		PUSH_FAILED_BUFFER_OVERFLOW,   // Buffer overflow while appending to vertex buffer
+		COPY_FAILED_BUFFER_MAPPED,     // Attempting to copy a buffer to another while one of them was mapped or they do not have the PERSISTENT flag set
+		CLEAR_FAILED_INVALID_BUFFER,   // 
+		RESIZE_FAILED_MISSING_BUFFERS  // Attempting to resize vertex buffer without specifying all sub-buffers
 	};
 
 	/// <summary>

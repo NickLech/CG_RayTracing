@@ -79,22 +79,6 @@ namespace cg_raytracing {
         void SetVertexBufferLabel(uint32_t _vao, std::string const& _label);
     }
 
-    struct Vertex2D {
-#pragma pack(push, 1)
-        float x, y;
-        float u, v;
-#pragma pack(pop)
-
-        std::vector<VertexAttribute> attributes() const {
-            return {
-                VertexAttribute{ VertexAttributeType::FLOAT, (char*)&x - (char*)this },
-                VertexAttribute{ VertexAttributeType::FLOAT, (char*)&y - (char*)this },
-                VertexAttribute{ VertexAttributeType::FLOAT, (char*)&u - (char*)this },
-                VertexAttribute{ VertexAttributeType::FLOAT, (char*)&v - (char*)this },
-            };
-        }
-    };
-
 
     /// <summary>
     /// Vertex buffer class with support for multiple buffers, each
@@ -106,6 +90,8 @@ namespace cg_raytracing {
     class VertexBuffer {
     public :
         VertexBuffer(VertexBuffer&& _prev) noexcept;
+
+        VertexBuffer& operator=(VertexBuffer&& _other) noexcept;
         
         /// <summary>
         /// Create shell of the vertex buffer (e.g. no 
@@ -147,7 +133,9 @@ namespace cg_raytracing {
         /// <summary>
         /// Append a single vertex to buffer _buf_index.
         /// The type of the pushed value is compared
-        /// against the registered type in the buffer
+        /// against the registered type in the buffer.
+        /// If the buffer is overflowed, the function 
+        /// will fail
         /// </summary>
         /// <typeparam name="Vert"></typeparam>
         /// <param name="_buf_index">Index of buffer</param>
@@ -162,7 +150,9 @@ namespace cg_raytracing {
         /// <summary>
         /// Append a list of vertices to buffer _buf_index.
         /// The type of the pushed values is compared
-        /// against the registered type in the buffer
+        /// against the registered type in the buffer.
+        /// If the buffer is overflowed, the function 
+        /// will fail
         /// </summary>
         /// <typeparam name="Vert"></typeparam>
         /// <param name="_buf_index">Index of buffer</param>
@@ -198,18 +188,65 @@ namespace cg_raytracing {
         /// is valid and does not check that the type
         /// of data and size are correct w.r.t. the
         /// buffer. If the size of the written data
-        /// overflows the buffer size, the buffer
-        /// will be recreated to accomodate at least
-        /// the new data. If any intermediate state
-        /// of the buffer resizing fails, the vertex
-        /// buffer will still be left in a well-defined
-        /// state
+        /// overflows the buffer size, the function will
+        /// fail
         /// </summary>
         /// <param name="_buf_index"></param>
         /// <param name="_data"></param>
         /// <param name="_size_bytes"></param>
         /// <returns></returns>
         std::optional<GLError> PushVertexDataUnsafe(size_t _buf_index, const void* _data, size_t _size_bytes);
+
+        /// <summary>
+        /// Get currently used buffer size (in number
+        /// of vertices) for buffer _buf_index
+        /// </summary>
+        /// <param name="_buf_index">Index of the buffer</param>
+        /// <returns>Buffer used size</returns>
+        FORCE_INLINE std::optional<size_t> GetBufferSize(size_t _buf_index) const {
+            if (_buf_index > m_buffers.size()) {
+                return std::nullopt;
+            }
+            return m_buf_sizes[_buf_index];
+        }
+
+        /// <summary>
+        /// Get buffer capacity (in number of vertices)
+        /// for buffer _buf_index
+        /// </summary>
+        /// <param name="_buf_index">Index of the buffer</param>
+        /// <returns>Buffer capacity</returns>
+        FORCE_INLINE std::optional<size_t> GetBufferCapacity(size_t _buf_index) const {
+            if (_buf_index > m_buffers.size()) {
+                return std::nullopt;
+            }
+            return m_buffers[_buf_index].GetBufferSize() /
+                m_attrib_sizes[_buf_index];
+        }
+
+
+        FORCE_INLINE std::optional<GLError> ClearBuffer(size_t _buf_index) {
+            if (_buf_index > m_buffers.size()) {
+                return GLError::CLEAR_FAILED_INVALID_BUFFER;
+            }
+            m_buf_sizes[_buf_index] = 0;
+            return std::nullopt;
+        }
+
+        FORCE_INLINE void ClearAllBuffers() {
+            for (auto& buf_size : m_buf_sizes) {
+                buf_size = 0;
+            }
+        }
+
+        /// <summary>
+        /// Vertex buffer resizing is explicit, use this function
+        /// to create a new vertex buffer, still containing the
+        /// data from the provided buffer, but with the new sizes
+        /// </summary>
+        /// <param name="_new_sizes"></param>
+        /// <returns></returns>
+        static std::expected<VertexBuffer, GLError> CreateResizedFrom(VertexBuffer const& _other, std::vector<size_t> const& _new_sizes);
 
         ~VertexBuffer();
 
@@ -224,14 +261,16 @@ namespace cg_raytracing {
 
     private :
         // Current used size for each buffer
-        std::vector<size_t>                  m_buf_sizes;
-        uint32_t                             m_vao;
+        std::vector<size_t>                       m_buf_sizes;
+        uint32_t                                  m_vao;
         // Allocated buffers for the vertex attributes
-        std::vector<GpuBuffer>               m_buffers;
+        std::vector<GpuBuffer>                    m_buffers;
         // Type of each attribute type in each buffer
-        std::vector<std::type_info const*>   m_attrib_types;
-        std::vector<size_t>                  m_attrib_sizes;
+        std::vector<std::type_info const*>        m_attrib_types;
+        std::vector<size_t>                       m_attrib_sizes;
         // Attribute index base for the next buffer
-        uint32_t                             m_curr_attrib_index;
+        uint32_t                                  m_curr_attrib_index;
+        std::vector<uint32_t>                     m_attrib_divisors;
+        std::vector<std::vector<VertexAttribute>> m_buf_attribs;
     };
 }

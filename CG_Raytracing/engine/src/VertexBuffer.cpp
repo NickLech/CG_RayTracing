@@ -122,13 +122,42 @@ namespace cg_raytracing {
 		m_buffers{ std::move(_prev.m_buffers) },
 		m_attrib_types{ std::move(_prev.m_attrib_types) },
 		m_attrib_sizes{ std::move(_prev.m_attrib_sizes) },
-		m_curr_attrib_index{_prev.m_curr_attrib_index} {
+		m_curr_attrib_index{_prev.m_curr_attrib_index},
+		m_attrib_divisors{ std::move(_prev.m_attrib_divisors) },
+		m_buf_attribs{ std::move(_prev.m_buf_attribs) } {
 		_prev.m_vao = 0;
-		_prev.m_buf_sizes = {};
+		_prev.m_buffers.clear();
 		_prev.m_buf_sizes = {};
 		_prev.m_attrib_types = {};
 		_prev.m_curr_attrib_index = 0;
 		_prev.m_attrib_sizes = {};
+		_prev.m_attrib_divisors = {};
+		_prev.m_buf_attribs = {};
+	}
+
+	VertexBuffer& VertexBuffer::operator=(VertexBuffer&& _other) noexcept {
+		this->~VertexBuffer();
+		m_buffers.clear();
+
+		m_vao = _other.m_vao;
+		m_buffers = std::move(_other.m_buffers);
+		m_buf_sizes = std::move(_other.m_buf_sizes);
+		m_attrib_types = std::move(_other.m_attrib_types);
+		m_curr_attrib_index = _other.m_curr_attrib_index;
+		m_attrib_sizes = std::move(_other.m_attrib_sizes);
+		m_attrib_divisors = std::move(_other.m_attrib_divisors);
+		m_buf_attribs = std::move(_other.m_buf_attribs);
+
+		_other.m_vao = 0;
+		_other.m_buffers.clear();
+		_other.m_buf_sizes = {};
+		_other.m_attrib_types = {};
+		_other.m_curr_attrib_index = 0;
+		_other.m_attrib_sizes = {};
+		_other.m_attrib_divisors = {};
+		_other.m_buf_attribs = {};
+
+		return *this;
 	}
 
 	VertexBuffer::VertexBuffer() :
@@ -137,7 +166,9 @@ namespace cg_raytracing {
 		m_buffers{},
 		m_attrib_types{},
 		m_attrib_sizes{},
-		m_curr_attrib_index{} {}
+		m_curr_attrib_index{},
+		m_attrib_divisors{},
+		m_buf_attribs{} {}
 
 	std::expected<VertexBuffer, GLError> VertexBuffer::CreateVertexBuffer() {
 		auto maybe_vao = detail::CreateVertexArrayObject();
@@ -180,10 +211,15 @@ namespace cg_raytracing {
 
 		auto maybe_err = m_buffers.back().MapBuffer(0, m_buffers.back().GetBufferSize(),
 			BufferMapping::WRITE | BufferMapping::PERSISTENT | BufferMapping::COHERENT);
+		if (maybe_err.has_value()) {
+			return maybe_err.value();
+		}
 
 		m_buf_sizes.push_back(0);
 		m_attrib_types.push_back(_attrib_type);
 		m_attrib_sizes.push_back(_attrib_size);
+		m_attrib_divisors.push_back(_attrib_divisor);
+		m_buf_attribs.push_back(_attribs);
 		
 		return std::nullopt;
 	}
@@ -217,43 +253,50 @@ namespace cg_raytracing {
 		auto curr_byte_offset = m_buf_sizes[_buf_index] * type_size;
 		auto last_byte_offset = curr_byte_offset + _size_bytes;
 		if (buf.GetBufferSize() < last_byte_offset) {
-			auto map_prots = buf.GetMapProts().value();
-			auto buf_prots = buf.GetBufferProts();
-
-			/// To prevent leaving the vertex buffer in an undefined
-			/// state if the remapping of the buffer fails, we create
-			/// a new temporary buffer and map it to host memory
-			/// If the mapping fails, the new buffer will be destroied
-			/// leaving the vertex buffer in a well-defined state,
-			/// otherwise, if everyting goes as expected, the
-			/// old buffer is replaced 
-
-			auto new_size = std::max(last_byte_offset, buf.GetBufferSize() * 2);
-			auto maybe_buf = GpuBuffer::CreateBuffer(new_size, buf_prots);
-			if (!maybe_buf.has_value()) {
-				return maybe_buf.error();
-			}
-
-			auto temp_buf = std::move(maybe_buf.value());
-			auto maybe_err = temp_buf.MapBuffer(0, temp_buf.GetBufferSize(), map_prots);
-			if (maybe_err.has_value()) {
-				/// Error occurred during mapping, new buffer is destroied
-				/// and the state of the vertex buffer is well defined
-				return maybe_err;
-			}
-
-			maybe_err = temp_buf.CopyFromBufferRange(buf, 0, 0, buf.GetBufferSize());
-			if (maybe_err.has_value()) {
-				return maybe_err;
-			}
-
-			buf = std::move(temp_buf);
+			return GLError::PUSH_FAILED_BUFFER_OVERFLOW;
 		}
 		auto maybe_ptr = buf.GetHostBuffer();
 		auto buf_ptr = maybe_ptr.value();
 		std::copy_n((const uint8_t*)_data, _size_bytes, (uint8_t*)(buf_ptr) + curr_byte_offset);
 		m_buf_sizes[_buf_index] += _size_bytes / type_size;
 		return std::nullopt;
+	}
+
+	std::expected<VertexBuffer, GLError> VertexBuffer::CreateResizedFrom(VertexBuffer const& _other, std::vector<size_t> const& _new_sizes) {
+		if (_other.m_buffers.size() != _new_sizes.size()) {
+			return std::unexpected{ GLError::RESIZE_FAILED_MISSING_BUFFERS };
+		}
+
+		auto maybe_vertex_buf = CreateVertexBuffer();
+		if (!maybe_vertex_buf.has_value()) {
+			return std::unexpected{ maybe_vertex_buf.error() };
+		}
+
+		auto new_vbuf = std::move(maybe_vertex_buf.value());
+
+		for (size_t curr_buf = 0; curr_buf < _new_sizes.size(); curr_buf++) {
+			auto maybe_err = new_vbuf.AddBufferImpl(
+				_other.m_attrib_types[curr_buf], 
+				_other.m_attrib_sizes[curr_buf],
+				_other.m_buf_attribs[curr_buf],
+				_other.m_attrib_divisors[curr_buf],
+				_new_sizes[curr_buf]);
+			if (maybe_err.has_value()) {
+				return std::unexpected{ maybe_err.value() };
+			}
+			auto curr_buf_size = _other.m_buf_sizes[curr_buf] * _other.m_attrib_sizes[curr_buf];
+			if (curr_buf_size == 0) {
+				continue;
+			}
+			auto copy_size = std::min(curr_buf_size, _new_sizes[curr_buf] * _other.m_attrib_sizes[curr_buf]);
+			maybe_err = new_vbuf.m_buffers.back().CopyFromBufferRange(_other.m_buffers[curr_buf], 0, 0, copy_size);
+			if (maybe_err.has_value()) {
+				return std::unexpected{ maybe_err.value() };
+			}
+			new_vbuf.m_buf_sizes[curr_buf] = _other.m_buf_sizes[curr_buf];
+		}
+
+		return new_vbuf;
 	}
 
 	void VertexBuffer::Bind() const {

@@ -9,6 +9,7 @@
 #include <Shader.hpp>
 #include <GLContext.hpp>
 #include <VertexBuffer.hpp>
+#include <IndexBuffer.hpp>
 
 #include <format>
 #include <iostream>
@@ -26,14 +27,15 @@ void __stdcall DebugCallback(GLenum source,
 	std::println(std::cout, "{}", message);
 }
 
-struct InstanceOffset {
+struct Vertex2D {
 #pragma pack(push, 1)
-	int32_t offset;
+	float x, y;
 #pragma pack(pop)
 
 	std::vector<cg_raytracing::VertexAttribute> attributes() const {
 		return {
-			cg_raytracing::VertexAttribute{ cg_raytracing::VertexAttributeType::INT, (char*)&offset - (char*)this }
+			cg_raytracing::VertexAttribute{ cg_raytracing::VertexAttributeType::FLOAT, (char*)&x - (char*)this },
+			cg_raytracing::VertexAttribute{ cg_raytracing::VertexAttributeType::FLOAT, (char*)&y - (char*)this }
 		};
 	}
 };
@@ -103,11 +105,26 @@ int main() {
 	glDebugMessageCallback(DebugCallback, nullptr);
 
 	auto vert_buf = cg_raytracing::VertexBuffer::CreateVertexBuffer().value();
-	vert_buf.AddBuffer<cg_raytracing::Vertex2D>(0, 1);
-	vert_buf.AddBuffer<InstanceOffset>(1, 16);
+	vert_buf.AddBuffer<Vertex2D>(0, 4);
 
-	vert_buf.PushVertexDataTyped(0, cg_raytracing::Vertex2D{});
-	vert_buf.PushVertexDataTyped(0, cg_raytracing::Vertex2D{});
+	auto index_buf = cg_raytracing::IndexBuffer::CreateIndexBuffer(6).value();
+
+	constexpr float VERTICES[4][2] = { 
+		{ -1.0, 1.0, },
+		{ 1.0, 1.0, },
+		{ -1.0, -1.0, },
+		{ 1.0, -1.0 }
+	};
+
+	constexpr float INDICES[6] = { 0, 1, 2, 2, 1, 3 };
+
+	for (size_t i = 0; i < 4; i++) {
+		vert_buf.PushVertexDataTyped(0, Vertex2D{ .x = VERTICES[i][0], .y = VERTICES[i][1] });
+	}
+
+	for (size_t i = 0; i < 6; i++) {
+		index_buf.PushIndex(INDICES[i]);
+	}
 
 	vert_buf.Bind();
 
