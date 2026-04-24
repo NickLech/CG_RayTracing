@@ -6,6 +6,13 @@
 #include <Macros.hpp>
 
 namespace cg_raytracing {
+	struct BufferRangeBinding {
+		uint32_t target{};
+		uint32_t index{};
+		uint32_t buffer{};
+		size_t offset{};
+		size_t extent{};
+	};
 	/// <summary>
 	/// Wrapper for the OpenGL context state.
 	/// Use this to bind buffers/programs/texture
@@ -66,18 +73,21 @@ namespace cg_raytracing {
 		void BindBuffer(uint32_t _target, uint32_t _buf_id);
 		void BindVao(uint32_t _vao);
 
+		void BindBufferRange(BufferRangeBinding const& _binding);
+
 		template <typename Key, typename Value>
 		using Map = std::unordered_map<Key, Value>;
 
 		//Opaque handle to the context
-		void*                   m_handle;
+		void*                                            m_handle;
 		//Opaque function pointer to set the current context
-		SetContextFun			m_set_context;
-		uint32_t				m_curr_program;
-		bool					m_enable_blend;
-		bool					m_enable_scissor;
-		Map<uint32_t, uint32_t> m_bound_buffers;
-		uint32_t				m_bound_vao;
+		SetContextFun			                         m_set_context;
+		uint32_t				                         m_curr_program;
+		bool					                         m_enable_blend;
+		bool					                         m_enable_scissor;
+		Map<uint32_t, uint32_t>                          m_bound_buffers;
+		uint32_t				                         m_bound_vao;
+		Map<uint32_t, Map<uint32_t, BufferRangeBinding>> m_range_bindings;
 	};
 
 	/// <summary>
@@ -131,7 +141,8 @@ namespace cg_raytracing {
 		PUSH_FAILED_BUFFER_OVERFLOW,   // Buffer overflow while appending to vertex buffer
 		COPY_FAILED_BUFFER_MAPPED,     // Attempting to copy a buffer to another while one of them was mapped or they do not have the PERSISTENT flag set
 		CLEAR_FAILED_INVALID_BUFFER,   // 
-		RESIZE_FAILED_MISSING_BUFFERS  // Attempting to resize vertex buffer without specifying all sub-buffers
+		RESIZE_FAILED_MISSING_BUFFERS, // Attempting to resize vertex buffer without specifying all sub-buffers
+		UNIFORM_NOT_FOUND              // glGetUniformLocation returned -1
 	};
 
 	/// <summary>

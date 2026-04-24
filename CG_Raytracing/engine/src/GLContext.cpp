@@ -79,6 +79,38 @@ namespace cg_raytracing {
 		m_bound_vao = _vao;
 	}
 
+	void GLContextWrapper::BindBufferRange(BufferRangeBinding const& _binding) {
+		if (!m_range_bindings.contains(_binding.target)) {
+			Map<uint32_t, BufferRangeBinding> bind_map{};
+			bind_map[_binding.index] = _binding;
+			m_range_bindings[_binding.target] = std::move(bind_map);
+			glBindBufferRange(_binding.target, _binding.index,
+				_binding.buffer, _binding.offset,
+				_binding.extent);
+			return;
+		}
+
+		if (!m_range_bindings[_binding.target].contains(_binding.index)) {
+			m_range_bindings[_binding.target][_binding.index] = _binding;
+			glBindBufferRange(_binding.target, _binding.index,
+				_binding.buffer, _binding.offset,
+				_binding.extent);
+			return;
+		}
+
+		auto const& old_binding = m_range_bindings[_binding.target][_binding.index];
+		if (old_binding.buffer == _binding.buffer &&
+			old_binding.extent == _binding.extent &&
+			old_binding.offset == _binding.offset) {
+			return;
+		}
+
+		m_range_bindings[_binding.target][_binding.index] = _binding;
+		glBindBufferRange(_binding.target, _binding.index,
+			_binding.buffer, _binding.offset,
+			_binding.extent);
+	}
+
 	GLContextWrapper* GetCurrentGLContext() {
 		return g_curr_ctx;
 	}
