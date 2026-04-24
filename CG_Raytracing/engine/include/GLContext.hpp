@@ -13,6 +13,17 @@ namespace cg_raytracing {
 		size_t offset{};
 		size_t extent{};
 	};
+
+	struct ScissorBox {
+		int32_t bottom_left_x{}, bottom_left_y{};
+		int32_t w{}, h{};
+	};
+
+	struct ViewportBox {
+		int32_t bottom_left_x{}, bottom_left_y{};
+		int32_t w{}, h{};
+	};
+
 	/// <summary>
 	/// Wrapper for the OpenGL context state.
 	/// Use this to bind buffers/programs/texture
@@ -75,6 +86,9 @@ namespace cg_raytracing {
 
 		void BindBufferRange(BufferRangeBinding const& _binding);
 
+		void SetScissor(ScissorBox const& _scissor);
+		void SetViewport(ViewportBox const& _viewport);
+
 		template <typename Key, typename Value>
 		using Map = std::unordered_map<Key, Value>;
 
@@ -88,6 +102,8 @@ namespace cg_raytracing {
 		Map<uint32_t, uint32_t>                          m_bound_buffers;
 		uint32_t				                         m_bound_vao;
 		Map<uint32_t, Map<uint32_t, BufferRangeBinding>> m_range_bindings;
+		ScissorBox                                       m_scissor;
+		ViewportBox                                      m_viewport;
 	};
 
 	/// <summary>

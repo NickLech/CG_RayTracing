@@ -139,6 +139,16 @@ int main() {
 			case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
 				close = true;
 				break;
+			case SDL_EVENT_WINDOW_RESIZED: {
+				int32_t w{}, h{};
+				SDL_GetWindowSize(window, &w, &h);
+				gl_ctx.SetViewport({
+					.bottom_left_x = 0,
+					.bottom_left_y = 0,
+					.w = w,
+					.h = h
+				});
+			} break;
 			default:
 				break;
 			}
@@ -150,24 +160,6 @@ int main() {
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (const void*)0);
-		//glDrawArrays(GL_TRIANGLES, 0, 6);
-
-		auto sync = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
-
-		auto flag = true;
-		while (flag)
-		{
-			auto res = glClientWaitSync(
-				sync, GL_SYNC_FLUSH_COMMANDS_BIT,
-				10000000
-			);
-
-			if (res == GL_ALREADY_SIGNALED ||
-				res == GL_CONDITION_SATISFIED)
-				flag = false;
-		}
-
-		glDeleteSync(sync);
 
 		SDL_GL_SwapWindow(window);
 	}

@@ -111,6 +111,32 @@ namespace cg_raytracing {
 			_binding.extent);
 	}
 
+	void GLContextWrapper::SetScissor(ScissorBox const& _scissor) {
+		if (_scissor.bottom_left_x == m_scissor.bottom_left_x &&
+			_scissor.bottom_left_y == m_scissor.bottom_left_y &&
+			_scissor.w == m_scissor.w &&
+			_scissor.h == m_scissor.h) {
+			return;
+		}
+
+		m_scissor = _scissor;
+		glScissor(_scissor.bottom_left_x, _scissor.bottom_left_y,
+			_scissor.w, _scissor.h);
+	}
+
+	void GLContextWrapper::SetViewport(ViewportBox const& _viewport) {
+		if (_viewport.bottom_left_x == m_viewport.bottom_left_x &&
+			_viewport.bottom_left_y == m_viewport.bottom_left_y &&
+			_viewport.w == m_viewport.w &&
+			_viewport.h == m_viewport.h) {
+			return;
+		}
+
+		m_viewport = _viewport;
+		glViewport(_viewport.bottom_left_x, _viewport.bottom_left_y,
+			_viewport.w, _viewport.h);
+	}
+
 	GLContextWrapper* GetCurrentGLContext() {
 		return g_curr_ctx;
 	}
