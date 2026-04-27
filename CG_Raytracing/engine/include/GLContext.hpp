@@ -2,10 +2,42 @@
 
 #include <cstdint>
 #include <unordered_map>
+#include <functional>
 
 #include <Macros.hpp>
+#include <GLError.hpp>
+
+#include <TextureFormats.hpp>
 
 namespace cg_raytracing {
+	struct BufferRangeBinding {
+		uint32_t target{};
+		uint32_t index{};
+		uint32_t buffer{};
+		size_t offset{};
+		size_t extent{};
+	};
+
+	struct ScissorBox {
+		int32_t bottom_left_x{}, bottom_left_y{};
+		int32_t w{}, h{};
+	};
+
+	struct ViewportBox {
+		int32_t bottom_left_x{}, bottom_left_y{};
+		int32_t w{}, h{};
+	};
+
+	struct ImageBinding {
+		uint32_t unit{};
+		uint32_t texture{};
+		uint32_t mip_level{};
+		bool layered{};
+		int32_t layer{};
+		ImageAccessFlags access{};
+		TextureFormat format{};
+	};
+
 	/// <summary>
 	/// Wrapper for the OpenGL context state.
 	/// Use this to bind buffers/programs/texture
@@ -20,7 +52,7 @@ namespace cg_raytracing {
 	/// <para>The wrapper does not manage the context's lifetime nor the bound objects, destroy everything manually!</para>
 	/// </summary>
 	struct GLContextWrapper {
-		using SetContextFun = bool(__cdecl*)(void* _window, void* _context);
+		using SetContextFun = std::function<bool(void*, void*)>;
 
 		/// All this functions are considered low level, no errors are returned
 		/// if an API call fails
@@ -66,18 +98,34 @@ namespace cg_raytracing {
 		void BindBuffer(uint32_t _target, uint32_t _buf_id);
 		void BindVao(uint32_t _vao);
 
+		void BindBufferRange(BufferRangeBinding const& _binding);
+
+		void SetScissor(ScissorBox const& _scissor);
+		void SetViewport(ViewportBox const& _viewport);
+
+		void SetActiveTextureSlot(uint32_t _slot);
+		void BindTexture(uint32_t _target, uint32_t _texture);
+
+		void BindImage(ImageBinding const& _binding);
+
 		template <typename Key, typename Value>
 		using Map = std::unordered_map<Key, Value>;
 
 		//Opaque handle to the context
-		void*                   m_handle;
+		void*                                            m_handle;
 		//Opaque function pointer to set the current context
-		SetContextFun			m_set_context;
-		uint32_t				m_curr_program;
-		bool					m_enable_blend;
-		bool					m_enable_scissor;
-		Map<uint32_t, uint32_t> m_bound_buffers;
-		uint32_t				m_bound_vao;
+		SetContextFun			                         m_set_context;
+		uint32_t				                         m_curr_program;
+		bool					                         m_enable_blend;
+		bool					                         m_enable_scissor;
+		Map<uint32_t, uint32_t>                          m_bound_buffers;
+		uint32_t				                         m_bound_vao;
+		Map<uint32_t, Map<uint32_t, BufferRangeBinding>> m_range_bindings;
+		ScissorBox                                       m_scissor;
+		ViewportBox                                      m_viewport;
+		uint32_t                                         m_active_texture_slot;
+		Map<uint32_t, uint32_t>                          m_texture_bindings;
+		Map<uint32_t, ImageBinding>                      m_image_bindings;
 	};
 
 	/// <summary>
@@ -95,44 +143,6 @@ namespace cg_raytracing {
 	GLContextWrapper* GetCurrentGLContext();
 
 	/////////////////////////////////////////////
-
-	/*
-	  Enum used to represent underlying OpenGL errors
-	  and also our errors
-	* GL_NO_ERROR
-	* GL_INVALID_ENUM
-	* GL_INVALID_VALUE
-	* GL_INVALID_OPERATION
-	* GL_INVALID_FRAMEBUFFER_OPERATION
-	* GL_OUT_OF_MEMORY
-	* GL_STACK_UNDERFLOW
-	* GL_STACK_OVERFLOW
-	*/
-	enum class GLError {
-		OK = 0,                        // Autoesplicative
-		INVALID_ENUM,                  // An enumerated argument (such as the format of a texture) is not valid
-		INVALID_VALUE,                 // Numeric value (e.g. size of a texture) is out of range
-		INVALID_OPERATION,             // May be a lot of different things
-		INVALID_FRAMEBUFFER_OPERATION, // Attempting to use a framebuffer in an invalid state
-		OUT_OF_MEMORY,				   // Autoesplicative
-		STACK_UNDERFLOW,               // Autoesplicative
-		STACK_OVERFLOW,                // Autoesplicative
-		MAP_FAILED_BUFFER_OVERFLOW,    // Attempted to map a buffer outside its range
-		MAP_FAILED_INVALID_PROTS,      // Attempted to map a buffer with invalid protections
-		UNKNOWN,                       // IDK
-		READ_FAILED_BUFFER_MAPPED,     // Attempting GL read buffer while the buffer is mapped without the "map persistent" bit
-		READ_FAILED_BUFFER_OVERFLOW,   // Autoesplicative
-		WRITE_FAILED_BUFFER_MAPPED,	   // Same as for buffer read
-		WRITE_FAILED_BUFFER_OVERFLOW,  // Same as for buffer read
-		RESIZE_FAILED_BUFFER_MAPPED,   // Buffer was CPU mapped while resizing
-		PUSH_FAILED_INVALID_BUFFER,    // Attempting to push data to invalid buffer inside a vertex buffer
-		PUSH_FAILED_TYPE_MISMATCH,     // Attempting to push data to buffer inside a vertex buffer with an incorrect type
-		PUSH_FAILED_SIZE_MISMATCH,     // Attempting to push data to buffer inside a vertex buffer with an incorrect size
-		PUSH_FAILED_BUFFER_OVERFLOW,   // Buffer overflow while appending to vertex buffer
-		COPY_FAILED_BUFFER_MAPPED,     // Attempting to copy a buffer to another while one of them was mapped or they do not have the PERSISTENT flag set
-		CLEAR_FAILED_INVALID_BUFFER,   // 
-		RESIZE_FAILED_MISSING_BUFFERS  // Attempting to resize vertex buffer without specifying all sub-buffers
-	};
 
 	/// <summary>
 	/// Convert OpenGL error value to

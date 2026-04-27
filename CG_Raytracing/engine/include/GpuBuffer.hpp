@@ -141,6 +141,16 @@ namespace cg_raytracing {
 			size_t _dst_offset_bytes,
 			size_t _len_bytes) const;
 
+		/// <summary>
+		/// Return a copy of this buffer. If the buffer
+		/// is mapped and not PERSISTENT, the function
+		/// will fail. Host mapping is not replicated
+		/// (e.g. if this buffer is host mapped in any way,
+		/// the clone won't be)
+		/// </summary>
+		/// <returns>Copy or error</returns>
+		std::expected<GpuBuffer, GLError> Clone() const;
+
 		//////////////////// GETTERS FOR BUFFER PROPERTIES //////////////////////////
 
 		FORCE_INLINE uint32_t GetBufferId() const {

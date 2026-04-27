@@ -289,7 +289,8 @@ namespace cg_raytracing {
 			auto should_return{ false };
 			
 			if (!m_is_mapped || !_other.m_is_mapped) {
-				should_return = true;
+				should_return = (m_is_mapped && !to_bool(m_curr_prots & BufferMapping::PERSISTENT)) ||
+					(_other.m_is_mapped && !to_bool(_other.m_curr_prots & BufferMapping::PERSISTENT));
 			}
 			else {
 				should_return = (!to_bool(m_curr_prots & BufferMapping::PERSISTENT) ||
@@ -317,6 +318,25 @@ namespace cg_raytracing {
 		}
 
 		return std::nullopt;
+	}
+
+	std::expected<GpuBuffer, GLError> GpuBuffer::Clone() const {
+		if (m_is_mapped && !to_bool(m_curr_prots & BufferMapping::PERSISTENT)) {
+			return std::unexpected{ GLError::COPY_FAILED_BUFFER_MAPPED };
+		}
+
+		auto maybe_new_buf = CreateBuffer(GetBufferSize(), GetBufferProts());
+		if (!maybe_new_buf.has_value()) {
+			return std::unexpected{ maybe_new_buf.error() };
+		}
+		auto new_buf = std::move(maybe_new_buf.value());
+
+		auto maybe_err = new_buf.CopyFromBufferRange(*this, 0, 0, GetBufferSize());
+		if (maybe_err.has_value()) {
+			return std::unexpected{ maybe_err.value() };
+		}
+
+		return new_buf;
 	}
 
 	void GpuBuffer::SetLabel(std::string const& _label) const {

@@ -248,6 +248,12 @@ namespace cg_raytracing {
         /// <returns></returns>
         static std::expected<VertexBuffer, GLError> CreateResizedFrom(VertexBuffer const& _other, std::vector<size_t> const& _new_sizes);
 
+        /// <summary>
+        /// Clone this vertex buffer
+        /// </summary>
+        /// <returns></returns>
+        std::expected<VertexBuffer, GLError> Clone() const;
+
         ~VertexBuffer();
 
         /// <summary>

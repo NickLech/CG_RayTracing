@@ -32,9 +32,13 @@ namespace cg_raytracing {
 
 	Shader::Shader(Shader&& _prev) noexcept :
 		m_stage_ids{std::move(_prev.m_stage_ids)},
-		m_program_id{_prev.m_program_id} {
+		m_program_id{_prev.m_program_id},
+		m_uniform_locations{std::move(_prev.m_uniform_locations)},
+		m_ubos_indexes{std::move(_prev.m_ubos_indexes)} {
 		_prev.m_stage_ids.clear();
 		_prev.m_program_id = 0;
+		_prev.m_uniform_locations.clear();
+		_prev.m_ubos_indexes.clear();
 	}
 
 	static std::optional<std::string> CheckShaderCompilationStatus(uint32_t _shader) {
@@ -140,7 +144,7 @@ namespace cg_raytracing {
 		glObjectLabel(GL_PROGRAM, m_program_id, _label.size(), _label.c_str());
 	}
 
-	void Shader::Bind() {
+	void cg_raytracing::Shader::Bind() const {
 		auto gl_ctx = GetCurrentGLContext();
 		gl_ctx->BindProgram(m_program_id);
 	}
@@ -166,8 +170,296 @@ namespace cg_raytracing {
 		m_stage_ids.clear();
 	}
 
+	std::expected<uint32_t, GLError> Shader::GetUniformLocation(std::string const& _name) {
+		if (m_uniform_locations.contains(_name)) {
+			return m_uniform_locations[_name];
+		}
+
+		auto location = glGetUniformLocation(m_program_id, _name.c_str());
+		auto maybe_err = ConvertGLErrorToEnum(glGetError());
+		if (GLError::OK != maybe_err) {
+			return std::unexpected{ maybe_err };
+		}
+
+		if (GL_INVALID_INDEX == location) {
+			return std::unexpected{ GLError::UNIFORM_NOT_FOUND };
+		}
+
+		m_uniform_locations[_name] = location;	
+		return (uint32_t)location;
+	}
+
+	std::expected<uint32_t, GLError> Shader::GetUboIndex(std::string const& _name) {
+		if (m_ubos_indexes.contains(_name)) {
+			return m_ubos_indexes[_name];
+		}
+		
+		auto index = glGetUniformBlockIndex(m_program_id, _name.c_str());
+		auto maybe_err = ConvertGLErrorToEnum(glGetError());
+		if (GLError::OK != maybe_err) {
+			return std::unexpected{ maybe_err };
+		}
+
+		if (GL_INVALID_INDEX == index) {
+			return std::unexpected{ GLError::UNIFORM_NOT_FOUND };
+		}
+
+		m_ubos_indexes[_name] = index;
+		return (uint32_t)index;
+	}
+
 	Shader::Shader() :
 		m_stage_ids{},
-		m_program_id{}
+		m_program_id{},
+		m_uniform_locations{},
+		m_ubos_indexes{}
 	{}
+
+	std::optional<GLError> Shader::SetUniform1f(std::string const& _name, float _value) {
+		auto maybe_index = GetUniformLocation(_name);
+		if (!maybe_index.has_value()) {
+			return maybe_index.error();
+		}
+		auto index = maybe_index.value();
+		
+		glUniform1f(index, _value);
+
+		auto maybe_err = ConvertGLErrorToEnum(glGetError());
+		if (GLError::OK != maybe_err) {
+			return maybe_err;
+		}
+
+		return std::nullopt;
+	}
+
+	std::optional<GLError> Shader::SetUniform2f(std::string const& _name, float _value1, float _value2) {
+		auto maybe_index = GetUniformLocation(_name);
+		if (!maybe_index.has_value()) {
+			return maybe_index.error();
+		}
+		auto index = maybe_index.value();
+
+		glUniform2f(index, _value1, _value2);
+
+		auto maybe_err = ConvertGLErrorToEnum(glGetError());
+		if (GLError::OK != maybe_err) {
+			return maybe_err;
+		}
+
+		return std::nullopt;
+	}
+
+	std::optional<GLError> Shader::SetUniform3f(std::string const& _name, float _value1, float _value2, float _value3) {
+		auto maybe_index = GetUniformLocation(_name);
+		if (!maybe_index.has_value()) {
+			return maybe_index.error();
+		}
+		auto index = maybe_index.value();
+
+		glUniform3f(index, _value1, _value2, _value3);
+
+		auto maybe_err = ConvertGLErrorToEnum(glGetError());
+		if (GLError::OK != maybe_err) {
+			return maybe_err;
+		}
+
+		return std::nullopt;
+	}
+
+	std::optional<GLError> Shader::SetUniform4f(std::string const& _name, float _value1, float _value2, float _value3, float _value4) {
+		auto maybe_index = GetUniformLocation(_name);
+		if (!maybe_index.has_value()) {
+			return maybe_index.error();
+		}
+		auto index = maybe_index.value();
+
+		glUniform4f(index, _value1, _value2, _value3, _value4);
+
+		auto maybe_err = ConvertGLErrorToEnum(glGetError());
+		if (GLError::OK != maybe_err) {
+			return maybe_err;
+		}
+
+		return std::nullopt;
+	}
+
+	std::optional<GLError> Shader::SetUniform1i(std::string const& _name, int32_t _value) {
+		auto maybe_index = GetUniformLocation(_name);
+		if (!maybe_index.has_value()) {
+			return maybe_index.error();
+		}
+		auto index = maybe_index.value();
+
+		glUniform1i(index, _value);
+
+		auto maybe_err = ConvertGLErrorToEnum(glGetError());
+		if (GLError::OK != maybe_err) {
+			return maybe_err;
+		}
+
+		return std::nullopt;
+	}
+	std::optional<GLError> Shader::SetUniform2i(std::string const& _name, int32_t _value1, int32_t _value2) {
+		auto maybe_index = GetUniformLocation(_name);
+		if (!maybe_index.has_value()) {
+			return maybe_index.error();
+		}
+		auto index = maybe_index.value();
+
+		glUniform2i(index, _value1, _value2);
+
+		auto maybe_err = ConvertGLErrorToEnum(glGetError());
+		if (GLError::OK != maybe_err) {
+			return maybe_err;
+		}
+
+		return std::nullopt;
+	}
+	std::optional<GLError> Shader::SetUniform3i(std::string const& _name, int32_t _value1, int32_t _value2, int32_t _value3) {
+		auto maybe_index = GetUniformLocation(_name);
+		if (!maybe_index.has_value()) {
+			return maybe_index.error();
+		}
+		auto index = maybe_index.value();
+
+		glUniform3i(index, _value1, _value2, _value3);
+
+		auto maybe_err = ConvertGLErrorToEnum(glGetError());
+		if (GLError::OK != maybe_err) {
+			return maybe_err;
+		}
+
+		return std::nullopt;
+	}
+	std::optional<GLError> Shader::SetUniform4i(std::string const& _name, int32_t _value1, int32_t _value2, int32_t _value3, int32_t _value4) {
+		auto maybe_index = GetUniformLocation(_name);
+		if (!maybe_index.has_value()) {
+			return maybe_index.error();
+		}
+		auto index = maybe_index.value();
+
+		glUniform4i(index, _value1, _value2, _value3, _value4);
+
+		auto maybe_err = ConvertGLErrorToEnum(glGetError());
+		if (GLError::OK != maybe_err) {
+			return maybe_err;
+		}
+
+		return std::nullopt;
+	}
+
+	std::optional<GLError> Shader::SetUniform1ui(std::string const& _name, uint32_t _value) {
+		auto maybe_index = GetUniformLocation(_name);
+		if (!maybe_index.has_value()) {
+			return maybe_index.error();
+		}
+		auto index = maybe_index.value();
+
+		glUniform1ui(index, _value);
+
+		auto maybe_err = ConvertGLErrorToEnum(glGetError());
+		if (GLError::OK != maybe_err) {
+			return maybe_err;
+		}
+
+		return std::nullopt;
+	}
+	std::optional<GLError> Shader::SetUniform2ui(std::string const& _name, uint32_t _value1, uint32_t _value2) {
+		auto maybe_index = GetUniformLocation(_name);
+		if (!maybe_index.has_value()) {
+			return maybe_index.error();
+		}
+		auto index = maybe_index.value();
+
+		glUniform2ui(index, _value1, _value2);
+
+		auto maybe_err = ConvertGLErrorToEnum(glGetError());
+		if (GLError::OK != maybe_err) {
+			return maybe_err;
+		}
+
+		return std::nullopt;
+	}
+	std::optional<GLError> Shader::SetUniform3ui(std::string const& _name, uint32_t _value1, uint32_t _value2, uint32_t _value3) {
+		auto maybe_index = GetUniformLocation(_name);
+		if (!maybe_index.has_value()) {
+			return maybe_index.error();
+		}
+		auto index = maybe_index.value();
+
+		glUniform3ui(index, _value1, _value2, _value3);
+
+		auto maybe_err = ConvertGLErrorToEnum(glGetError());
+		if (GLError::OK != maybe_err) {
+			return maybe_err;
+		}
+
+		return std::nullopt;
+	}
+	std::optional<GLError> Shader::SetUniform4ui(std::string const& _name, uint32_t _value1, uint32_t _value2, uint32_t _value3, uint32_t _value4) {
+		auto maybe_index = GetUniformLocation(_name);
+		if (!maybe_index.has_value()) {
+			return maybe_index.error();
+		}
+		auto index = maybe_index.value();
+
+		glUniform4ui(index, _value1, _value2, _value3, _value4);
+
+		auto maybe_err = ConvertGLErrorToEnum(glGetError());
+		if (GLError::OK != maybe_err) {
+			return maybe_err;
+		}
+
+		return std::nullopt;
+	}
+
+
+	std::optional<GLError> Shader::SetUniformMatrix2(std::string const& _name, bool _transpose, const std::array<float, 4 >& _values) {
+		auto maybe_index = GetUniformLocation(_name);
+		if (!maybe_index.has_value()) {
+			return maybe_index.error();
+		}
+		auto index = maybe_index.value();
+
+		glUniformMatrix2fv(index, 1, _transpose, _values.data());
+
+		auto maybe_err = ConvertGLErrorToEnum(glGetError());
+		if (GLError::OK != maybe_err) {
+			return maybe_err;
+		}
+
+		return std::nullopt;
+	}
+	std::optional<GLError> Shader::SetUniformMatrix3(std::string const& _name, bool _transpose, const std::array<float, 9 >& _values) {
+		auto maybe_index = GetUniformLocation(_name);
+		if (!maybe_index.has_value()) {
+			return maybe_index.error();
+		}
+		auto index = maybe_index.value();
+
+		glUniformMatrix3fv(index, 1, _transpose, _values.data());
+
+		auto maybe_err = ConvertGLErrorToEnum(glGetError());
+		if (GLError::OK != maybe_err) {
+			return maybe_err;
+		}
+
+		return std::nullopt;
+	}
+	std::optional<GLError> Shader::SetUniformMatrix4(std::string const& _name, bool _transpose, const std::array<float, 16>& _values) {
+		auto maybe_index = GetUniformLocation(_name);
+		if (!maybe_index.has_value()) {
+			return maybe_index.error();
+		}
+		auto index = maybe_index.value();
+
+		glUniformMatrix4fv(index, 1, _transpose, _values.data());
+
+		auto maybe_err = ConvertGLErrorToEnum(glGetError());
+		if (GLError::OK != maybe_err) {
+			return maybe_err;
+		}
+
+		return std::nullopt;
+	}
 }

@@ -69,6 +69,23 @@ namespace cg_raytracing {
 		return std::nullopt;
 	}
 
+	std::expected<IndexBuffer, GLError> IndexBuffer::Clone() const {
+		auto maybe_buf = m_buf.Clone();
+		if (!maybe_buf.has_value()) {
+			return std::unexpected{ maybe_buf.error() };
+		}
+		auto new_buf = std::move(maybe_buf.value());
+		auto maybe_err = new_buf.MapBuffer(0, new_buf.GetBufferSize(),
+			m_buf.GetMapProts().value());
+		if (maybe_err.has_value()) {
+			return std::unexpected{ maybe_err.value() };
+		}
+		auto new_index_buf = IndexBuffer();
+		new_index_buf.m_buf = std::move(new_buf);
+		new_index_buf.m_curr_size = m_curr_size;
+		return new_index_buf;
+	}
+
 	void IndexBuffer::Bind() const {
 		m_buf.BindBuffer(GL_ELEMENT_ARRAY_BUFFER);
 	}

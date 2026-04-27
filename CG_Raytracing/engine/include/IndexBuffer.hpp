@@ -13,12 +13,30 @@ namespace cg_raytracing {
 
 		IndexBuffer& operator=(IndexBuffer&& _other) noexcept;
 
+		/// <summary>
+		/// Create a new index buffer with enough capacity to
+		/// hold _size indexes
+		/// </summary>
+		/// <param name="_size">Max. number of indexes</param>
+		/// <returns>Buffer or error</returns>
 		static std::expected<IndexBuffer, GLError> CreateIndexBuffer(size_t _size);
 
+		/// <summary>
+		/// Push single index
+		/// </summary>
+		/// <param name="_index"The index></param>
+		/// <returns>Error if buffer overflow</returns>
 		std::optional<GLError> PushIndex(uint32_t _index);
 
 		std::optional<GLError> PushIndexes(std::vector<uint32_t> const& _indexes);
 
+		/// <summary>
+		/// Push index data directly from a pointer, _size
+		/// indexes are copied
+		/// </summary>
+		/// <param name="_data">Pointer to index data</param>
+		/// <param name="_size">Number of indexes</param>
+		/// <returns>Possible error</returns>
 		std::optional<GLError> PushIndexesUnsafe(uint32_t const* _data, size_t _size);
 
 		/// <summary>
@@ -49,6 +67,12 @@ namespace cg_raytracing {
 		}
 
 		void Bind() const;
+
+		/// <summary>
+		/// Clone this index buffer
+		/// </summary>
+		/// <returns>Clone or error</returns>
+		std::expected<IndexBuffer, GLError> Clone() const;
 
 	private :
 		IndexBuffer();

@@ -3,14 +3,23 @@ set(ENGINE_SOURCES
     "src/GLContext.cpp" 
     "src/GpuBuffer.cpp" 
     "src/VertexBuffer.cpp" 
-    "src/IndexBuffer.cpp")
+    "src/IndexBuffer.cpp" 
+    "src/Texture2D.cpp" 
+    "src/TextureFormats.cpp" 
+    "src/SamplerParams.cpp" 
+    "src/FrameBuffer.cpp")
 
 set(ENGINE_INCLUDES 
     "include/Shader.hpp"
     "include/GLContext.hpp"
     "include/GpuBuffer.hpp"
     "include/VertexBuffer.hpp"
-    "include/IndexBuffer.hpp")
+    "include/IndexBuffer.hpp"
+    "include/TextureBase.hpp"
+    "include/Texture2D.hpp"
+    "include/TextureFormats.hpp"
+    "include/SamplerParams.hpp"
+    "include/FrameBuffer.hpp")
 
 add_library(RaytracingEngine STATIC ${ENGINE_INCLUDES} ${ENGINE_SOURCES})
 set_property(TARGET RaytracingEngine PROPERTY CXX_STANDARD 23)

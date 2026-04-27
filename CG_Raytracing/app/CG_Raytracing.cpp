@@ -10,11 +10,13 @@
 #include <GLContext.hpp>
 #include <VertexBuffer.hpp>
 #include <IndexBuffer.hpp>
+#include <Texture2D.hpp>
 
 #include <format>
 #include <iostream>
 #include <filesystem>
 #include <bit>
+#include <ctime>
 
 void __stdcall DebugCallback(GLenum source,
 	GLenum type,
@@ -30,12 +32,15 @@ void __stdcall DebugCallback(GLenum source,
 struct Vertex2D {
 #pragma pack(push, 1)
 	float x, y;
+	float u, v;
 #pragma pack(pop)
 
 	std::vector<cg_raytracing::VertexAttribute> attributes() const {
 		return {
 			cg_raytracing::VertexAttribute{ cg_raytracing::VertexAttributeType::FLOAT, (char*)&x - (char*)this },
-			cg_raytracing::VertexAttribute{ cg_raytracing::VertexAttributeType::FLOAT, (char*)&y - (char*)this }
+			cg_raytracing::VertexAttribute{ cg_raytracing::VertexAttributeType::FLOAT, (char*)&y - (char*)this },
+			cg_raytracing::VertexAttribute{ cg_raytracing::VertexAttributeType::FLOAT, (char*)&u - (char*)this },
+			cg_raytracing::VertexAttribute{ cg_raytracing::VertexAttributeType::FLOAT, (char*)&v - (char*)this }
 		};
 	}
 };
@@ -63,11 +68,9 @@ int main() {
 		std::exit(1);
 	}
 
-	using SetContextFun = cg_raytracing::GLContextWrapper::SetContextFun;
-	// Regarding the function pointer cast: even though the signature is different, 
-	// the underlying memory for the arguments is the exact same. In my opinion,
-	// this is allowed
-	auto gl_ctx = cg_raytracing::GLContextWrapper::CreateWrapper(context, std::bit_cast<SetContextFun>((void*)SDL_GL_MakeCurrent));
+	auto gl_ctx = cg_raytracing::GLContextWrapper::CreateWrapper(context, [](void* window, void* ctx) {
+		return SDL_GL_MakeCurrent((SDL_Window*)window, (SDL_GLContext)ctx);
+	});
 	if (!gl_ctx.MakeCurrent((void*)window)) {
 		std::println(std::cout, "SDL_GL_MakeCurrent() error: {}", SDL_GetError());
 		std::exit(1);
@@ -109,17 +112,17 @@ int main() {
 
 	auto index_buf = cg_raytracing::IndexBuffer::CreateIndexBuffer(6).value();
 
-	constexpr float VERTICES[4][2] = { 
-		{ -1.0, 1.0, },
-		{ 1.0, 1.0, },
-		{ -1.0, -1.0, },
-		{ 1.0, -1.0 }
+	constexpr Vertex2D VERTICES[4] = { 
+		{ -1.0, 1.0, 0.0, 1.0 },
+		{ 1.0, 1.0, 1.0, 1.0 },
+		{ -1.0, -1.0, 0.0, 0.0 },
+		{ 1.0, -1.0, 1.0, 0.0 }
 	};
 
 	constexpr float INDICES[6] = { 0, 1, 2, 2, 1, 3 };
 
 	for (size_t i = 0; i < 4; i++) {
-		vert_buf.PushVertexDataTyped(0, Vertex2D{ .x = VERTICES[i][0], .y = VERTICES[i][1] });
+		vert_buf.PushVertexDataTyped(0, VERTICES[i]);
 	}
 
 	for (size_t i = 0; i < 6; i++) {
@@ -127,6 +130,22 @@ int main() {
 	}
 
 	vert_buf.Bind();
+	index_buf.Bind();
+	shader.Bind();
+
+	srand(time(0));
+
+	auto tex = cg_raytracing::Texture2D::CreateTexture(1, 640, 480, cg_raytracing::TextureFormat::RGB8).value();
+	tex.SetUpscaleFilter(cg_raytracing::SamplerFilter::LINEAR);
+	tex.SetDownscaleFilter(cg_raytracing::SamplerFilter::LINEAR);
+	std::vector<uint8_t> temp_buf{};
+	temp_buf.resize(tex.GetSizeBytes());
+	for (auto& val : temp_buf) {
+		val = (uint8_t)(rand() % 256);
+	}
+	tex.CopyFromBuffer(temp_buf.data(), 0, 0, 0, tex.GetWidth(), tex.GetHeight(),
+		cg_raytracing::PixelFormat::RGB, cg_raytracing::PixelDataType::UNSIGNED_BYTE);
+	tex.BindTexture(GL_TEXTURE_2D);
 
 	bool close = false;
 	while (!close) {
@@ -137,6 +156,16 @@ int main() {
 			case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
 				close = true;
 				break;
+			case SDL_EVENT_WINDOW_RESIZED: {
+				int32_t w{}, h{};
+				SDL_GetWindowSize(window, &w, &h);
+				gl_ctx.SetViewport({
+					.bottom_left_x = 0,
+					.bottom_left_y = 0,
+					.w = w,
+					.h = h
+				});
+			} break;
 			default:
 				break;
 			}
@@ -146,27 +175,8 @@ int main() {
 		glClearColor(1.f, 1.f, 1.f, 1.f);
 		glClearDepth(1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		shader.Bind();
-		//This will cause GL_INVALID_OPERATION since
-		//no VAO is bound
-		glDrawArrays(GL_TRIANGLES, 0, 6);
-
-		auto sync = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
-
-		auto flag = true;
-		while (flag)
-		{
-			auto res = glClientWaitSync(
-				sync, GL_SYNC_FLUSH_COMMANDS_BIT,
-				10000000
-			);
-
-			if (res == GL_ALREADY_SIGNALED ||
-				res == GL_CONDITION_SATISFIED)
-				flag = false;
-		}
-
-		glDeleteSync(sync);
+		
+		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (const void*)0);
 
 		SDL_GL_SwapWindow(window);
 	}

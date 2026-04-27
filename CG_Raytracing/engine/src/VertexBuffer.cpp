@@ -307,6 +307,14 @@ namespace cg_raytracing {
 		return new_vbuf;
 	}
 
+	std::expected<VertexBuffer, GLError> VertexBuffer::Clone() const {
+		std::vector<size_t> sizes{};
+		for (size_t buf_index = 0; buf_index < m_buffers.size(); buf_index++) {
+			sizes.push_back(GetBufferCapacity(buf_index).value());
+		}
+		return CreateResizedFrom(*this, sizes);
+	}
+
 	void VertexBuffer::Bind() const {
 		auto ctx = GetCurrentGLContext();
 		ctx->BindVao(m_vao);
