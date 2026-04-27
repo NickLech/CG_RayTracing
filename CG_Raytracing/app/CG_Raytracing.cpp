@@ -18,7 +18,7 @@
 #include <bit>
 #include <ctime>
 
-void __stdcall DebugCallback(GLenum source,
+void DebugCallback(GLenum source,
 	GLenum type,
 	GLuint id,
 	GLenum severity,
