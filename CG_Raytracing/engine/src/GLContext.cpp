@@ -4,6 +4,9 @@
 #include <GL/glew.h>
 
 namespace cg_raytracing {
+	// This is thread local and global for two reasons:
+	// - Only one context can be bound in a thread at any given time
+	// - A context can be bound to only one thread at any given time
 	thread_local GLContextWrapper* g_curr_ctx = nullptr;
 
 	GLContextWrapper GLContextWrapper::CreateWrapper(void* _gl_context, SetContextFun _set_ctx_function) {
@@ -25,10 +28,11 @@ namespace cg_raytracing {
 		if (m_curr_program == _program) {
 			return;
 		}
-		glUseProgram(_program);
+		glUseProgram(_program); // Enable the program on the GPU, only one program per context can be bound
 		m_curr_program = _program;
 	}
 
+	// Simple alpha blending enable/disable
 	void GLContextWrapper::SetBlendEnable(bool _blend) {
 		if (m_enable_blend == _blend) {
 			return;

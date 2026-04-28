@@ -17,6 +17,7 @@
 #include <filesystem>
 #include <bit>
 #include <ctime>
+#include <print>
 
 void DebugCallback(GLenum source,
 	GLenum type,
@@ -51,11 +52,15 @@ int main() {
 		std::exit(1);
 	}
 
+	// Set double-buffering on the swapchain (render to one buffer, while another is presented by the window)
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+	// Set OpenGL 4.6
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 6);
+	// Disable compatibility profile sheganigans
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 
+	// SDL_CreateWindow requires SDL_WINDOW_OPENGL to use OpenGL
 	auto window = SDL_CreateWindow("Test", 1000, 720, SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL | SDL_WINDOW_HIGH_PIXEL_DENSITY);
 	if (window == nullptr) {
 		std::println(std::cout, "SDL_CreateWindow error: {}", SDL_GetError());
@@ -69,6 +74,8 @@ int main() {
 	}
 
 	auto gl_ctx = cg_raytracing::GLContextWrapper::CreateWrapper(context, [](void* window, void* ctx) {
+		// To be used, generally a context must be bound to a window
+		// This lambda does exactly that
 		return SDL_GL_MakeCurrent((SDL_Window*)window, (SDL_GLContext)ctx);
 	});
 	if (!gl_ctx.MakeCurrent((void*)window)) {
@@ -100,18 +107,28 @@ int main() {
 		{"./assets/main.frag", ShaderStage::FRAGMENT}
 	}).value();
 
+	// Disable alpha-blending
 	gl_ctx.SetBlendEnable(false);
+	// Disable scissor (e.g. clipping outside a specific rect)
 	gl_ctx.SetScissorEnable(false);
 
+	// https://wikis.khronos.org/opengl/Debug_Output
+	// https://registry.khronos.org/OpenGL-Refpages/gl4/html/glDebugMessageCallback.xhtml
 	glEnable(GL_DEBUG_OUTPUT);
 	glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
 	glDebugMessageCallback(DebugCallback, nullptr);
 
 	auto vert_buf = cg_raytracing::VertexBuffer::CreateVertexBuffer().value();
-	vert_buf.AddBuffer<Vertex2D>(0, 4);
+	vert_buf.AddBuffer<Vertex2D>(0, 4); // Add a single buffer, containing per-vertex data,
+	                                    // reserve space for 4 vertices
 
+	// Index buffer with size for 6 indices
 	auto index_buf = cg_raytracing::IndexBuffer::CreateIndexBuffer(6).value();
 
+	// 4 Vertices:
+	// X, Y and U, V
+	// X, Y are in screen coordinates (in [-1.0, 1.0])
+	// U, V are in texture coordinates (in [0.0, 1.0])
 	constexpr Vertex2D VERTICES[4] = { 
 		{ -1.0, 1.0, 0.0, 1.0 },
 		{ 1.0, 1.0, 1.0, 1.0 },
@@ -119,6 +136,7 @@ int main() {
 		{ 1.0, -1.0, 1.0, 0.0 }
 	};
 
+	// Indices in the vertex buffer to draw a quad
 	constexpr float INDICES[6] = { 0, 1, 2, 2, 1, 3 };
 
 	for (size_t i = 0; i < 4; i++) {
@@ -129,6 +147,8 @@ int main() {
 		index_buf.PushIndex(INDICES[i]);
 	}
 
+	// Use the two buffers
+	// and the shader
 	vert_buf.Bind();
 	index_buf.Bind();
 	shader.Bind();
@@ -171,11 +191,39 @@ int main() {
 			}
 		}
 
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
-		glClearColor(1.f, 1.f, 1.f, 1.f);
-		glClearDepth(1.0f);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		// glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		// Clear the current framebuffer
+		// Clearing can be divided in color buffer, depth buffer and stencil buffer
+		glClearColor(1.f, 1.f, 1.f, 1.f); // Specify clear color for color buffer
+		glClearDepth(1.0f);               // Specify clear for depth buffer
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Effectively clear color and depth
 		
+		// Draw indexed vertices:
+		// 6 triangles, drawn using 6 indices
+		// from the bound index buffer, starting
+		// from offset 0 in the index buffer
+
+		// In short, instead of using directly the vertex buffer
+		// for drawing, which would require replicating the vertex
+		// data for adjacent vertices, we write that data once
+		// in the vertex buffer, and then we write that vertex
+		// index multiple times in the index buffer. This
+		// can reduce the memory usage by a lot, especially
+		// if each vertex contains a lot of data
+
+		// Example: a vertex contains the following data
+		// X, Y, Z coordinates -> 12 bytes
+		// U, V -> 8 bytes
+		// Vertex normal -> 12 bytes
+		// (vertex might also contain base color and so on...)
+		// For a total of 32 bytes, for a quad we have 6
+		// vertices -> 192 bytes
+		// But what if we use a index buffer ?
+		// 4 unique vertices -> 128 bytes
+		// 6 indices, let's say 4 bytes each -> 24 bytes
+		// In total 152 bytes
+		// 40 bytes less
+		// And this is only a very simple example
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (const void*)0);
 
 		SDL_GL_SwapWindow(window);

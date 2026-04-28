@@ -42,9 +42,25 @@ namespace cg_raytracing {
 		COHERENT = 16   // "Automatically" flush the buffer when either CPU/GPU write to it
 	};
 	
-	// Delcare logical operators for the enum
+	// Declare logical operators for the enum
 	DECLARE_ENUM_LOGICAL_OPS(BufferMapping)
 
+	/// <summary>
+	/// This class represent any buffer on the the GPU.
+	/// Buffers are used for many things, such as vertex
+	/// data, indices, staging, uniforms and things
+	/// like SSBOs.
+	/// https://wikis.khronos.org/opengl/Buffer_Object
+	/// Under normal circumstances, an OpenGL
+	/// buffer is not directly accessible by 
+	/// the CPU. To be read/written directly,
+	/// the buffer must be host mapped, with
+	/// the reuqired access flags. A mapped
+	/// buffer may need manual coherency
+	/// if not mapped as PERSISTENT and
+	/// COHERENT
+	/// https://wikis.khronos.org/opengl/Memory_Model
+	/// </summary>
 	class GpuBuffer {
 	public :
 		GpuBuffer(GpuBuffer&& _prev) noexcept;
