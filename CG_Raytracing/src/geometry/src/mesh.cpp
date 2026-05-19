@@ -57,19 +57,19 @@ BoundingBox Mesh::GetBoundingBox() const {
     BoundingBox bbox;
     // TODO: implement a method inside the BoundingBox class to create a
     // bounding box from min and max coordinates
-    bbox.min_x = min_x;
-    bbox.max_x = max_x;
-    bbox.min_y = min_y;
-    bbox.max_y = max_y;
-    bbox.min_z = min_z;
-    bbox.max_z = max_z;
+    bbox.min_x = min_x + this->m_center.x;
+    bbox.max_x = max_x + this->m_center.x;
+    bbox.min_y = min_y + this->m_center.y;
+    bbox.max_y = max_y + this->m_center.y;
+    bbox.min_z = min_z + this->m_center.z;
+    bbox.max_z = max_z + this->m_center.z;
     bbox.pos = math::Vec3((min_x + max_x) / 2, (min_y + max_y) / 2,
                           (min_z + max_z) / 2);
     return bbox;
 }
 
 std::expected<int, std::string>
-Mesh::LoadFromObj(std::filesystem::path _obj_path) {
+Mesh::LoadFromObj(std::filesystem::path _obj_path, float _scale) {
     std::ifstream obj_file(_obj_path);
 
     if (!obj_file.is_open()) {
@@ -108,11 +108,11 @@ Mesh::LoadFromObj(std::filesystem::path _obj_path) {
                 // TODO:append to vertex array
                 if (info_index == 0) {
                     this->m_vertex_positions.push_back(
-                        math::Vec3(std::stof(pattern), 0, 0));
+                        math::Vec3(std::stof(pattern) * _scale, 0, 0));
                 } else if (info_index == 1) {
-                    this->m_vertex_positions.back().y = std::stof(pattern);
+                    this->m_vertex_positions.back().y = -std::stof(pattern) * _scale;
                 } else {
-                    this->m_vertex_positions.back().z = std::stof(pattern);
+                    this->m_vertex_positions.back().z = std::stof(pattern) * _scale;
                 }
                 info_index += 1;
                 break;

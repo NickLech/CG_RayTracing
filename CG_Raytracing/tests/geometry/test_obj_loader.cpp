@@ -14,7 +14,7 @@ TEST_CASE("Mesh OBJ Loader") {
     SECTION("File Not Found Boundary") {
         Material dummy_material;
         Mesh mesh(Vec3(0, 0, 0), dummy_material);
-        auto result = mesh.LoadFromObj("./invalid.obj");
+        auto result = mesh.LoadFromObj("./invalid.obj", 1.0);
 
         REQUIRE(result.has_value() == false);
         REQUIRE(result.error() == "Failed to open file: ./invalid.obj");
@@ -24,7 +24,7 @@ TEST_CASE("Mesh OBJ Loader") {
 
         Material dummy_material;
         Mesh mesh(Vec3(0, 0, 0), dummy_material);
-        auto result = mesh.LoadFromObj(test_file_path);
+        auto result = mesh.LoadFromObj(test_file_path, 1.0);
         REQUIRE(result == 0);
 
         // 1. Validate progressive Vertex assembly
@@ -59,7 +59,7 @@ TEST_CASE("Mesh OBJ Loader") {
 
         Material dummy_material;
         Mesh mesh(Vec3(0, 0, 0), dummy_material);
-        auto result = mesh.LoadFromObj(test_file_path);
+        auto result = mesh.LoadFromObj(test_file_path, 1.0);
 
         REQUIRE(result.has_value());
 

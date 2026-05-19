@@ -39,7 +39,7 @@ class Mesh : public Hittable {
     BoundingBox GetBoundingBox() const override;
 
     std::expected<int, std::string>
-    LoadFromObj(std::filesystem::path _obj_path);
+    LoadFromObj(std::filesystem::path _obj_path, float _scale);
 };
 
 } // namespace cg_raytracing::geometry

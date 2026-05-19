@@ -19,7 +19,7 @@ TEST_CASE("Mesh Bounding Box Validation Suite",
 
         Mesh mesh(Vec3(0.0f, 0.0f, 0.0f), dummy_material);
 
-        auto load_result = mesh.LoadFromObj(test_file_path);
+        auto load_result = mesh.LoadFromObj(test_file_path, 1.0);
         REQUIRE(load_result.has_value());
 
         BoundingBox bbox = mesh.GetBoundingBox();

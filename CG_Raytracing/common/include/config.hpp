@@ -17,4 +17,18 @@ inline constexpr float CAMERA_DIRECTION[3] = {0.0, 0.0, 0.0};
 
 inline constexpr uint32_t RAY_PER_PIXEL = 10;
 inline constexpr uint32_t RENDER_ITERATION = 10;
+inline const float CAMERA_PRESETS[][2][3] = {
+    {
+        {0.0f, 0.0f, 0.0f},
+        {0.0f, 0.0f, 0.0f}
+    },
+    {
+        {10.0f, 10.0f, -15.0f},
+        {0.0f, -0.15f, 0.0f}
+    },
+    {
+        {-10.0f, -10.0f, 15.0f},
+        {0.0f, 0.15f, 0.0f}
+    }
+};
 } // namespace Config
