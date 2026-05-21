@@ -1,4 +1,7 @@
 #pragma once
+
+#include <vector>
+#include <memory>
 #include "vec3.hpp"
 #include "ray.hpp"
 #include "hit_record.hpp"
@@ -14,6 +17,12 @@ struct Material {
                               float             _light_intensity,
                               const math::Ray&  _ray) const = 0;
     virtual ~Material() = default;
+
+    virtual std::vector<math::Ray> Scatter(
+        const math::Ray& _ray_in,
+        const HitRecord& _hit,
+        int              _num_samples = 1
+    ) const = 0;
 };
 
 // Standard implementation in MTL format
@@ -31,6 +40,13 @@ struct StandardMaterial : public Material {
                      const math::Vec3& _light_color,
                      float             _light_intensity,
                      const math::Ray&  _ray) const override;
+
+
+    virtual std::vector<math::Ray> Scatter(
+        const math::Ray& _ray_in,
+        const HitRecord& _hit,
+        int              _num_samples = 1
+    ) const override;
 
     static StandardMaterial Diffuse(math::Vec3 _kd,
                                      math::Vec3 _ka = {0.1f, 0.1f, 0.1f}) {

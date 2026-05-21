@@ -4,11 +4,14 @@ add_executable(UnitTests
     "./geometry/test_obj_loader.cpp"
     "./geometry/test_mesh.cpp"
     "geometry/test_kd_tree.cpp"
+    "material/test_material_scatter.cpp"
 )
 
 target_link_libraries(UnitTests PRIVATE Math Geometry)
 
-target_include_directories(UnitTests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
+target_include_directories(UnitTests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}"
+    "${CMAKE_SOURCE_DIR}/src/geometry/include"
+)
 
 if(WIN32)
     FetchContent_Declare(
@@ -21,7 +24,9 @@ elseif(UNIX)
     find_package(Catch2 3 REQUIRED)
 endif()
 
-target_link_libraries(UnitTests PRIVATE Catch2::Catch2WithMain)
+target_link_libraries(UnitTests PRIVATE Catch2::Catch2WithMain
+Geometry PUBLIC common Math)
+
 
 set_property(TARGET UnitTests PROPERTY CXX_STANDARD 23)
 
