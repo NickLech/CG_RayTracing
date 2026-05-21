@@ -84,3 +84,67 @@ TEST_CASE("Mesh OBJ Loader") {
         REQUIRE(mesh.m_indices[2][2] == 1);
     }
 }
+
+TEST_CASE("Mesh Material File Parsing Suite",
+          "[geometry][mesh][material][parser]") {
+    using namespace cg_raytracing::geometry;
+    using namespace cg_raytracing::math;
+
+    // Explicitly path tracking the target validation asset
+    std::filesystem::path test_mtl_path = "./assets/test_material_file.mtl";
+
+    REQUIRE(std::filesystem::exists(test_mtl_path));
+
+    SECTION("Validate Property Extraction and Map Association") {
+        // Instantiate mesh container on origin
+        Mesh mesh(Vec3(0.0f, 0.0f, 0.0f));
+
+        // Execute your parser over the filesystem target
+        mesh.ReadMaterialFromMtl(test_mtl_path.string());
+
+        // 1. Verify collections allocated the expected count from file headers
+        REQUIRE(mesh.m_material.size() == 2);
+        REQUIRE(mesh.m_material_map.size() == 2);
+
+        // 2. Test lookup existence inside your string mapping structure
+        REQUIRE(mesh.m_material_map.contains("Wood"));
+        REQUIRE(mesh.m_material_map.contains("RedPlastic"));
+
+        // ==========================================
+        // Verify Target Material 1: "Wood"
+        // ==========================================
+        auto wood_mat = mesh.m_material_map["Wood"];
+        REQUIRE(wood_mat != nullptr);
+
+        // Verify basic uniform floating-point definitions
+        REQUIRE(wood_mat->m_ns == Catch::Approx(96.078431f));
+        REQUIRE(wood_mat->m_ni == Catch::Approx(1.000000f));
+        REQUIRE(wood_mat->m_d  == Catch::Approx(1.000000f));
+        REQUIRE(wood_mat->m_illum == 0);
+
+        // Verify vector transformations matching the parsed strings
+        REQUIRE(wood_mat->m_ka.x == Catch::Approx(1.000000f));
+        REQUIRE(wood_mat->m_ka.y == Catch::Approx(1.000000f));
+        REQUIRE(wood_mat->m_ka.z == Catch::Approx(1.000000f));
+
+        REQUIRE(wood_mat->m_kd.x == Catch::Approx(0.640000f));
+        REQUIRE(wood_mat->m_kd.y == Catch::Approx(0.640000f));
+        REQUIRE(wood_mat->m_kd.z == Catch::Approx(0.640000f));
+
+        REQUIRE(wood_mat->m_ks.x == Catch::Approx(0.500000f));
+        REQUIRE(wood_mat->m_ks.y == Catch::Approx(0.500000f));
+        REQUIRE(wood_mat->m_ks.z == Catch::Approx(0.500000f));
+
+        // ==========================================
+        // Verify Target Material 2: "RedPlastic"
+        // ==========================================
+        auto plastic_mat = mesh.m_material_map["RedPlastic"];
+        REQUIRE(plastic_mat != nullptr);
+
+        // Make sure properties didn't bleed across active allocation markers
+        REQUIRE(plastic_mat->m_kd.x == Catch::Approx(1.000000f));
+        REQUIRE(plastic_mat->m_kd.y == Catch::Approx(0.000000f));
+        REQUIRE(plastic_mat->m_kd.z == Catch::Approx(0.000000f));
+        REQUIRE(plastic_mat->m_ns == Catch::Approx(50.0f));
+    }
+}

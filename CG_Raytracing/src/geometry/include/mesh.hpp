@@ -44,7 +44,6 @@ class Mesh : public Hittable {
 
     std::expected<int, std::string> LoadFromObj(std::filesystem::path _obj_path,
                                                 float _scale);
-  private:
     void ReadMaterialFromMtl(std::string _mtl_path);
 };
 

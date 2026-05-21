@@ -41,3 +41,4 @@ TEST_CASE("Mesh Bounding Box Validation Suite",
         REQUIRE(bbox.Volume() == Catch::Approx(0.0f));
     }
 }
+
