@@ -339,7 +339,7 @@ int main() {
 
     std::shared_ptr<Mesh> train = std::make_shared<Mesh>(Vec3(0.0f, 0.0f, 40.0f), mat_train);
     // TODO: handle exception
-    auto loader_status = train->LoadFromObj("./assets/meshes/Treno.obj");
+    // auto loader_status = train->LoadFromObj("./assets/meshes/Treno.obj");
 
     world.AddObject(std::make_shared<Sphere>(Vec3(-40.0f, 0.0f, 200.0f), 30.f, mat_sphere));
     world.AddObject(std::make_shared<Cube>(Vec3(40.0f, 0.0f, 200.0f), 20.f, mat_cube));

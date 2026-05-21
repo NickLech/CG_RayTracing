@@ -89,7 +89,7 @@ void Camera::RenderThreadRenderBlock(RenderThreadData const& _data, RenderParam 
     auto end_x = start_x + _param.size_x;
     auto end_y = start_y + _param.size_y;
 
-    std::println(std::cout, "From X: {}, Y: {} to X: {}, Y: {}", start_x, start_y, end_x, end_y);
+    //std::println(std::cout, "From X: {}, Y: {} to X: {}, Y: {}", start_x, start_y, end_x, end_y);
 
     for (uint32_t y = start_y; y < end_y; y++) {
         for (uint32_t x = start_x; x < end_x; x++) {
