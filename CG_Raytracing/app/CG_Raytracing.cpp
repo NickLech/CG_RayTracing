@@ -112,11 +112,15 @@ void HandleKeyDown(SDL_Event &_ev,
 
         const auto& preset = Config::CAMERA_PRESETS[s_current_preset];
 
-        *_my_camera = cg_raytracing::scene::Camera(
+        using Camera = cg_raytracing::scene::Camera;
+
+        _my_camera.reset(nullptr);
+        _my_camera = std::make_unique<Camera>(
             Config::SENSOR_SIZE_WIDTH, Config::FOCAL_LENGTH,
             Config::IMAGE_WIDTH, Config::IMAGE_HEIGHT,
             preset[0], preset[1]
         );
+        
         must_update = true;
         break;
     } // don't remove, may cause errors due to variable declaration in switch
@@ -287,7 +291,7 @@ int main() {
 
     using Hittable = cg_raytracing::geometry::Hittable;
     using World = cg_raytracing::scene::World;
-    using Material = cg_raytracing::geometry::Material;
+    using StandardMaterial = cg_raytracing::geometry::StandardMaterial;
     using Sphere = cg_raytracing::geometry::Sphere;
     using Cube = cg_raytracing::geometry::Cube;
     using Mesh = cg_raytracing::geometry::Mesh;
@@ -300,11 +304,15 @@ int main() {
     // che implementi i metodi richiesti
     // hittables = ObjLoader::Load("model.obj", &mat);
 
-    Material mat_sphere =
-        Material::Diffuse({ 0.7f, 0.2f, 0.2f });
-
-    Material mat_cube =
-        Material::Metal({ 0.2f, 0.2f, 0.8f }, 0.5f);
+    auto mat_sphere = std::make_shared<StandardMaterial>(
+    StandardMaterial::Diffuse({0.7f, 0.2f, 0.2f})
+    );
+    auto mat_cube = std::make_shared<StandardMaterial>(
+        StandardMaterial::Metal({0.2f, 0.2f, 0.8f}, 0.5f)
+    );
+    auto mat_train = std::make_shared<StandardMaterial>(
+        StandardMaterial::Diffuse({0.7f, 0.2f, 0.2f})
+    );
 
     auto world = World::CreateEmpty(1000.f);
 
@@ -316,7 +324,6 @@ int main() {
     world.AddObject(std::make_shared<Cube>(Vec3(40.0f, 0.0f, 200.0f), 20.f, mat_cube));
     world.AddObject(std::make_shared<Sphere>(Vec3(0.0f, 0.0f, 250.0f), 20.f, mat_cube));
     world.AddObject(train);
-
 
     world.UpdateTree();
 

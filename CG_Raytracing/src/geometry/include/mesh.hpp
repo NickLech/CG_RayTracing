@@ -20,7 +20,7 @@
 namespace cg_raytracing::geometry {
 class Mesh : public Hittable {
   public:
-    Material m_material;
+    std::shared_ptr<Material> m_material;
     std::vector<math::Vec3> m_vertex_positions;
     std::vector<math::Vec3> m_vertex_normals;
     std::vector<std::array<float, 2>> m_face_uv;
@@ -30,7 +30,7 @@ class Mesh : public Hittable {
 
     bool m_smooth_shading;
 
-    Mesh(cg_raytracing::math::Vec3 _center, Material _material);
+    Mesh(cg_raytracing::math::Vec3 _center, std::shared_ptr<Material> _material);
 
     std::optional<HitRecord> Hit(const cg_raytracing::math::Ray &_ray,
                                  float _t_min = TMIN,

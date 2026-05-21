@@ -1,4 +1,5 @@
 #include "mesh.hpp"
+#include "material.hpp"
 #include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
 #include <filesystem>
@@ -12,7 +13,9 @@ TEST_CASE("Mesh OBJ Loader") {
     std::filesystem::path test_file_path = "./assets/test_obj_file.obj";
 
     SECTION("File Not Found Boundary") {
-        Material dummy_material;
+        auto dummy_material = std::make_shared<StandardMaterial>(
+            StandardMaterial::Diffuse({0.5f, 0.5f, 0.5f})
+        );
         Mesh mesh(Vec3(0, 0, 0), dummy_material);
         auto result = mesh.LoadFromObj("./invalid.obj", 1.0);
 
@@ -22,7 +25,9 @@ TEST_CASE("Mesh OBJ Loader") {
 
     SECTION("Valid Single Face Geometry Integrity") {
 
-        Material dummy_material;
+        auto dummy_material = std::make_shared<StandardMaterial>(
+            StandardMaterial::Diffuse({0.5f, 0.5f, 0.5f})
+        );
         Mesh mesh(Vec3(0, 0, 0), dummy_material);
         auto result = mesh.LoadFromObj(test_file_path, 1.0);
         REQUIRE(result == 0);
@@ -56,8 +61,9 @@ TEST_CASE("Mesh OBJ Loader") {
 
     SECTION("Face Creation Index Mapping Verification") {
         // Exact test scenario from your input
-
-        Material dummy_material;
+        auto dummy_material = std::make_shared<StandardMaterial>(
+            StandardMaterial::Diffuse({0.5f, 0.5f, 0.5f})
+        );
         Mesh mesh(Vec3(0, 0, 0), dummy_material);
         auto result = mesh.LoadFromObj(test_file_path, 1.0);
 

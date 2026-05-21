@@ -19,7 +19,9 @@ TEST_CASE("KD Tree tests") {
 		using Ray = cg_raytracing::math::Ray;
 
 		std::vector<std::shared_ptr<Hittable>> objects{};
-		auto material = cg_raytracing::geometry::Material::Diffuse({});
+		auto material = std::make_shared<cg_raytracing::geometry::StandardMaterial>(
+			cg_raytracing::geometry::StandardMaterial::Diffuse({0.5f, 0.5f, 0.5f})
+		);
 		objects.push_back(std::make_shared<Cube>(Vec3(.0f, .0f, .0f), 5.f, material));
 
 		auto kd_tree = cg_raytracing::geometry::KDTree::CreateFromHittables(objects, 50.f);
@@ -70,7 +72,9 @@ TEST_CASE("KD Tree tests") {
 		using Vec3 = cg_raytracing::math::Vec3;
 		using Ray = cg_raytracing::math::Ray;
 
-		auto material = cg_raytracing::geometry::Material::Diffuse({});
+		auto material = std::make_shared<cg_raytracing::geometry::StandardMaterial>(
+			cg_raytracing::geometry::StandardMaterial::Diffuse({0.5f, 0.5f, 0.5f})
+		);
 
 		const float HALF_SIZE = 2.5f;
 
@@ -94,7 +98,9 @@ TEST_CASE("KD Tree tests") {
 		using Ray = cg_raytracing::math::Ray;
 
 		std::vector<std::shared_ptr<Hittable>> objects{};
-		auto material = cg_raytracing::geometry::Material::Diffuse({});
+		auto material = std::make_shared<cg_raytracing::geometry::StandardMaterial>(
+			cg_raytracing::geometry::StandardMaterial::Diffuse({0.5f, 0.5f, 0.5f})
+		);
 		objects.push_back(std::make_shared<Cube>(Vec3(.0f, .0f, .0f), 5.f, material));
 
 		auto kd_tree = cg_raytracing::geometry::KDTree::CreateFromHittables(objects, 50.f);
@@ -114,7 +120,9 @@ TEST_CASE("KD Tree tests") {
 		using Ray = cg_raytracing::math::Ray;
 
 		std::vector<std::shared_ptr<Hittable>> objects{};
-		auto material = cg_raytracing::geometry::Material::Diffuse({});
+		auto material = std::make_shared<cg_raytracing::geometry::StandardMaterial>(
+			cg_raytracing::geometry::StandardMaterial::Diffuse({0.5f, 0.5f, 0.5f})
+		);
 		objects.push_back(std::make_shared<Cube>(Vec3(.0f, .0f, .0f), 2.5f, material));
 		objects.push_back(std::make_shared<Cube>(Vec3(10.0f, .0f, .0f), 2.5f, material));
 
@@ -165,7 +173,9 @@ TEST_CASE("KD Tree tests") {
 		using Ray = cg_raytracing::math::Ray;
 
 		std::vector<std::shared_ptr<Hittable>> objects{};
-		auto material = cg_raytracing::geometry::Material::Diffuse({});
+		auto material = std::make_shared<cg_raytracing::geometry::StandardMaterial>(
+			cg_raytracing::geometry::StandardMaterial::Diffuse({0.5f, 0.5f, 0.5f})
+		);
 		objects.push_back(std::make_shared<Cube>(Vec3(.0f, .0f, .0f), 2.5f, material));
 		objects.push_back(std::make_shared<Cube>(Vec3(10.0f, .0f, .0f), 2.5f, material));
 
@@ -232,7 +242,9 @@ TEST_CASE("KD Tree tests") {
 		using Ray = cg_raytracing::math::Ray;
 
 		std::vector<std::shared_ptr<Hittable>> objects{};
-		auto material = cg_raytracing::geometry::Material::Diffuse({});
+		auto material = std::make_shared<cg_raytracing::geometry::StandardMaterial>(
+			cg_raytracing::geometry::StandardMaterial::Diffuse({0.5f, 0.5f, 0.5f})
+		);
 
 		objects.push_back(std::make_shared<Cube>(Vec3(.0f, .0f, .0f), 2.5f, material));
 		auto kd_tree = cg_raytracing::geometry::KDTree::CreateFromHittables(objects, 50.f);

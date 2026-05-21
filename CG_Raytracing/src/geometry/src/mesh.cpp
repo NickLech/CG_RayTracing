@@ -1,12 +1,13 @@
 #include "mesh.hpp"
+#include <memory>
 #include <cstddef>
 #include <optional>
 // #include <unistd.h> Exists only on POSIX/UNIX
 
 namespace cg_raytracing::geometry {
 
-Mesh::Mesh(cg_raytracing::math::Vec3 _center, Material _material) {
-    this->m_center = _center;
+Mesh::Mesh(cg_raytracing::math::Vec3 _center, std::shared_ptr<Material> _material) {
+    this->m_center   = _center;
     this->m_material = _material;
 }
 std::optional<HitRecord> Mesh::Hit(const cg_raytracing::math::Ray &_ray,
@@ -18,9 +19,9 @@ std::optional<HitRecord> Mesh::Hit(const cg_raytracing::math::Ray &_ray,
     for (auto triangle : this->m_indices | std::views::chunk(3)) {
 
         Triangle current_triangle(m_vertex_positions[triangle[0][0] - 1] + this->m_center,
-                                  m_vertex_positions[triangle[1][0] - 1] + this->m_center,
-                                  m_vertex_positions[triangle[2][0] - 1] + this->m_center,
-                                  &this->m_material);
+                           m_vertex_positions[triangle[1][0] - 1] + this->m_center,
+                           m_vertex_positions[triangle[2][0] - 1] + this->m_center,
+                           this->m_material.get());
 
         auto hit_result = current_triangle.Hit(_ray, _t_min, closest_hit_distance);
         if (hit_result) {

@@ -2,11 +2,11 @@
 
 namespace cg_raytracing::geometry {
 
-    Cube::Cube(math::Vec3 _center, float _half_size, Material _material) : 
-        m_material(_material),  
-        m_triangles(BuildTriangles(_center, _half_size)),
-        m_center{_center}, m_size{_half_size * 2.f} 
-    {}
+    Cube::Cube(math::Vec3 _center, float _half_size,
+           std::shared_ptr<Material> _material) :
+    m_material(_material),
+    m_triangles(BuildTriangles(_center, _half_size)),
+    m_center{_center}, m_size{_half_size * 2.f} {}
     
     std::optional<HitRecord> Cube::Hit(const math::Ray& _ray,
                                        float _t_min,
@@ -43,7 +43,7 @@ namespace cg_raytracing::geometry {
         const math::Vec3 v011(cx-s, cy+s, cz+s);
         const math::Vec3 v111(cx+s, cy+s, cz+s);
     
-        const Material* mat = &m_material;
+        const Material* mat = m_material.get();
     
         return {{
             // Front face  (z+)

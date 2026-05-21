@@ -1,33 +1,71 @@
 #pragma once
+
+#include <vector>
+#include <memory>
 #include "vec3.hpp"
+#include "ray.hpp"
+#include "hit_record.hpp"
 
 namespace cg_raytracing::geometry {
 
-// Supported shading models
-enum class MaterialType {
-    DIFFUSE,
-    METAL,
-    DIELECTRIC
-};
+namespace scene_fwd { struct PointLight; }
 
 struct Material {
-    cg_raytracing::math::Vec3 m_albedo;                      // base color (r, g, b) in [0, 1]
-    MaterialType              m_type = MaterialType::DIFFUSE;
-    float                     m_roughness = 1.0f;            // METAL only: 0 = mirror, 1 = rough
-    float                     m_ior       = 1.5f;            // DIELECTRIC only: index of refraction (glass ≈ 1.5)
+    virtual math::Vec3 Shade(const HitRecord&  _hit,
+                              const math::Vec3& _light_pos,
+                              const math::Vec3& _light_color,
+                              float             _light_intensity,
+                              const math::Ray&  _ray) const = 0;
+    virtual ~Material() = default;
 
-    // Factory helpers — prefer these over direct construction
-    static Material Diffuse(cg_raytracing::math::Vec3 _color) {
-        return { _color, MaterialType::DIFFUSE };
+    virtual std::vector<math::Ray> Scatter(
+        const math::Ray& _ray_in,
+        const HitRecord& _hit,
+        int              _num_samples = 1
+    ) const = 0;
+};
+
+// Standard implementation in MTL format
+struct StandardMaterial : public Material {
+    math::Vec3  m_ka    = {0.1f, 0.1f, 0.1f};
+    math::Vec3  m_kd;
+    math::Vec3  m_ks    = {0.5f, 0.5f, 0.5f};
+    float       m_ns    = 0.0f;
+    float       m_ni    = 1.0f;
+    float       m_d     = 1.0f;
+    int         m_illum = 1;
+
+    math::Vec3 Shade(const HitRecord&  _hit,
+                     const math::Vec3& _light_pos,
+                     const math::Vec3& _light_color,
+                     float             _light_intensity,
+                     const math::Ray&  _ray) const override;
+
+
+    virtual std::vector<math::Ray> Scatter(
+        const math::Ray& _ray_in,
+        const HitRecord& _hit,
+        int              _num_samples = 1
+    ) const override;
+
+    static StandardMaterial Diffuse(math::Vec3 _kd,
+                                     math::Vec3 _ka = {0.1f, 0.1f, 0.1f}) {
+        StandardMaterial m{};
+        m.m_kd    = _kd;
+        m.m_ka    = _ka;
+        m.m_illum = 1;
+        return m;
     }
 
-    static Material Metal(cg_raytracing::math::Vec3 _color, float _roughness = 0.0f) {
-        return { _color, MaterialType::METAL, _roughness };
-    }
-
-    // White dielectric by default (glass-like)
-    static Material Dielectric(float _ior = 1.5f) {
-        return { {1, 1, 1}, MaterialType::DIELECTRIC, 0.0f, _ior };
+    static StandardMaterial Metal(math::Vec3 _kd,
+                                   math::Vec3 _ks = {0.9f, 0.9f, 0.9f},
+                                   float _ns = 200.0f) {
+        StandardMaterial m{};
+        m.m_kd    = _kd;
+        m.m_ks    = _ks;
+        m.m_ns    = _ns;
+        m.m_illum = 2;
+        return m;
     }
 };
 

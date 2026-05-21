@@ -38,4 +38,24 @@ namespace cg_raytracing::math {
 		}
 		return vec;
 	}
+
+	/// Generates a uniformly distributed random unit vector in the hemisphere
+	/// oriented around the given surface normal.
+	math::Vec3 RandomInHemisphere(const math::Vec3& _normal) {
+		// Seeded once per program run — mt19937 is a pseudo-random number generator
+		static std::mt19937 rng(std::random_device{}());
+		static std::uniform_real_distribution<float> dist(-1.0f, 1.0f);
+
+		math::Vec3 random_dir;
+		// Rejection sampling: discard points outside the unit sphere
+		do {
+			random_dir = math::Vec3(dist(rng), dist(rng), dist(rng));
+		} while (random_dir.length_squared() > 1.0f);
+
+		// Flip to correct hemisphere if pointing away from the surface (under the surface)
+		if (random_dir.dot(_normal) < 0.0f)
+			random_dir = random_dir * -1.0f;
+
+		return random_dir.normalized();
+	}
 }
