@@ -6,7 +6,9 @@
 #include "triangle.hpp"
 #include "vec3.hpp"
 #include "point_light.hpp"
+
 #include <algorithm>
+#include <ranges>
 
 
 using namespace cg_raytracing::scene;
@@ -19,7 +21,8 @@ Camera::Camera(uint32_t _sensor_size_width, uint32_t _focal_length,
       m_focal_length(_focal_length), m_image_width(_image_width),
       m_image_height(_image_height),
       m_position(_position[0], _position[1], _position[2]),
-      m_direction(_direction[0], _direction[1], _direction[2]) {
+      m_direction(_direction[0], _direction[1], _direction[2]),
+      m_threads{} {
 
     // get the top left corner from which calculate all the other rays direction
     math::Vec3 top_left =
@@ -45,31 +48,51 @@ Camera::Camera(uint32_t _sensor_size_width, uint32_t _focal_length,
                 this->m_position);
         }
     }
-}
 
-
-
-void Camera::Rotate(const math::Vec3 &_rotation_angles) {
-    this->m_direction.Rotate(_rotation_angles);
-
-    for (auto &Ray : this->m_rays_matrix) {
-        Ray.Rotate(_rotation_angles);
+    auto num_threads = std::thread::hardware_concurrency() * 2;
+    m_threads.reserve(num_threads);
+    for (auto i : std::views::iota(0U, num_threads)) {
+        RenderThreadData th_data{};
+        th_data.th = std::jthread([this, i](std::stop_token tok) {
+            this->RenderThreadMain(tok, i);
+        });
+        m_threads.push_back(std::move(th_data));
     }
 }
 
-void Camera::Translate(const math::Vec3 &_translation_vector) {
-    this->m_position += _translation_vector;
-    for (auto &Ray : this->m_rays_matrix) {
-        Ray.Translate(_translation_vector);
+void Camera::RenderThreadMain(std::stop_token _tok, uint32_t _index) {
+    std::println(std::cout, "Thread {} started", _index);
+    while (!_tok.stop_requested()) {
+        m_threads[_index].start_sema.s.acquire();
+        if (_tok.stop_requested()) {
+            break;
+        }
+        RenderThreadRender(m_threads[_index]);
+        m_threads[_index].finish_sema.s.release();
     }
+    std::println(std::cout, "Thread {} stopped", _index);
 }
 
-void Camera::BurstRays(PointLight& _light, World const& _world) {
-    int hit_count = 0;
+void Camera::RenderThreadRender(RenderThreadData& _data) {
+    for (auto const& param : _data.params) {
+        RenderThreadRenderBlock(_data, param);
+    }
+    _data.params.clear();
+}
 
-    for (uint32_t y = 0; y < this->m_image_height; y++) {
+void Camera::RenderThreadRenderBlock(RenderThreadData const& _data, RenderParam _param) {
+    auto world = _param.world;
+    auto light = _param.light;
 
-        for (uint32_t x = 0; x < this->m_image_width; x++) {
+    auto start_x = _param.pos_x;
+    auto start_y = _param.pos_y;
+    auto end_x = start_x + _param.size_x;
+    auto end_y = start_y + _param.size_y;
+
+    std::println(std::cout, "From X: {}, Y: {} to X: {}, Y: {}", start_x, start_y, end_x, end_y);
+
+    for (uint32_t y = start_y; y < end_y; y++) {
+        for (uint32_t x = start_x; x < end_x; x++) {
 
             uint32_t base_idx =
                 (y * this->m_image_width + x) * 3;
@@ -81,32 +104,17 @@ void Camera::BurstRays(PointLight& _light, World const& _world) {
 
             std::optional<geometry::HitRecord> hit{};
 
-            hit = _world.Hit(ray);
+            hit = world->Hit(ray);
 
             // Shading
             if (hit) {
 
-                hit_count++;
-                
-                /*
-                // Direction from surface point to light
-                math::Vec3 light_dir =
-                    (_light.m_position - hit->m_point).normalized();
-
-                // Lambert diffuse shading
-                float diffuse =
-                    std::max(
-                        hit->m_normal.dot(light_dir),
-                        0.0f
-                    );
-                */
-
                 // Final color
                 math::Vec3 color = hit->m_material->Shade(
                     *hit,
-                    _light.m_position,
-                    _light.m_color,
-                    _light.m_intensity,
+                    light->m_position,
+                    light->m_color,
+                    light->m_intensity,
                     ray
                 );
 
@@ -125,7 +133,8 @@ void Camera::BurstRays(PointLight& _light, World const& _world) {
                 this->m_img_buf[base_idx + 2] =
                     static_cast<uint8_t>(color.z * 255.0f);
 
-            } else {
+            }
+            else {
 
                 // Background gradient
                 float t =
@@ -137,106 +146,69 @@ void Camera::BurstRays(PointLight& _light, World const& _world) {
                 this->m_img_buf[base_idx + 1] =
                     static_cast<uint8_t>(
                         (1.0f - t) * 180 + t * 80
-                    );
+                        );
 
                 this->m_img_buf[base_idx + 2] = 255;
             }
         }
     }
-
-    // 
-
-    // Debug stats
-    // int hit_sphere_count = 0;
-    // int hit_cube_count   = 0;
-    // 
-    // for (uint32_t y = 0; y < this->m_image_height; y++) {
-    // 
-    //     for (uint32_t x = 0; x < this->m_image_width; x++) {
-    // 
-    //         const math::Ray& ray =
-    //             this->m_rays_matrix[
-    //                 y * this->m_image_width + x
-    //             ];
-    // 
-    //         if (sphere.Hit(ray))
-    //             hit_sphere_count++;
-    // 
-    //         if (cube.Hit(ray))
-    //             hit_cube_count++;
-    //     }
-    // }
-    // 
-    // std::println(std::cout, "Total hits: {}", hit_count);
-    // std::println(std::cout, "Sphere hits: {}", hit_sphere_count);
-    // std::println(std::cout, "Cube hits: {}", hit_cube_count);
 }
 
-/*
-void Camera::BurstRays() {
-    // Define materials
-    geometry::Material mat_sphere =
-        geometry::Material::Diffuse({0.8f, 0.2f, 0.2f});
-    geometry::Material mat_cube =
-        geometry::Material::Metal({0.9f, 0.1f, 0.1f}, 0.5f);
+void Camera::Rotate(const math::Vec3 &_rotation_angles) {
+    this->m_direction.Rotate(_rotation_angles);
 
-    geometry::Sphere sphere(math::Vec3(-40.0f, 0.0f, 200.0f), 30.0f,
-                            mat_sphere);
-
-    geometry::Cube cube(math::Vec3(40.0f, 0.0f, 200.0f), 20.0f, mat_cube);
-
-    int hit_count = 0;
-    for (uint32_t y = 0; y < this->m_image_height; y++) {
-        for (uint32_t x = 0; x < this->m_image_width; x++) {
-            uint32_t base_idx = (y * this->m_image_width + x) * 3;
-            const math::Ray &ray =
-                this->m_rays_matrix[y * this->m_image_width + x];
-
-            // Test both objects, keep the closest hit
-            auto hit_sphere = sphere.Hit(ray);
-            auto hit_cube = cube.Hit(ray);
-
-            std::optional<geometry::HitRecord> hit;
-            if (hit_sphere && hit_cube)
-                hit = (hit_sphere->m_t < hit_cube->m_t) ? hit_sphere : hit_cube;
-            else if (hit_sphere)
-                hit = hit_sphere;
-            else if (hit_cube)
-                hit = hit_cube;
-
-            if (hit) {
-                hit_count++;
-                this->m_img_buf[base_idx] =
-                    (uint8_t)((hit->m_normal.x + 1.0f) * 0.5f * 255);
-                this->m_img_buf[base_idx + 1] =
-                    (uint8_t)((hit->m_normal.y + 1.0f) * 0.5f * 255);
-                this->m_img_buf[base_idx + 2] =
-                    (uint8_t)((hit->m_normal.z + 1.0f) * 0.5f * 255);
-            } else {
-                float t = (float)y / this->m_image_height;
-                this->m_img_buf[base_idx] = 0;
-                this->m_img_buf[base_idx + 1] =
-                    (uint8_t)((1.0f - t) * 180 + t * 80);
-                this->m_img_buf[base_idx + 2] = 255;
-            }
-        }
+    for (auto &Ray : this->m_rays_matrix) {
+        Ray.Rotate(_rotation_angles);
     }
-
-    // Debug prints
-    int hit_sphere_count = 0, hit_cube_count = 0;
-    for (uint32_t y = 0; y < this->m_image_height; y++) {
-        for (uint32_t x = 0; x < this->m_image_width; x++) {
-            const math::Ray &ray =
-                this->m_rays_matrix[y * this->m_image_width + x];
-            if (sphere.Hit(ray))
-                hit_sphere_count++;
-            if (cube.Hit(ray))
-                hit_cube_count++;
-        }
-    }
-    std::println(std::cout, "Total hits: {}", hit_count);
-    std::println(std::cout, "Sphere hits: {}", hit_sphere_count);
-    std::println(std::cout, "Cube hits: {}", hit_cube_count);
 }
 
-*/
+void Camera::Translate(const math::Vec3 &_translation_vector) {
+    this->m_position += _translation_vector;
+    for (auto &Ray : this->m_rays_matrix) {
+        Ray.Translate(_translation_vector);
+    }
+}
+
+void Camera::BurstRays(PointLight& _light, World const& _world) {
+    const auto NUM_ROWS_PER_THREAD = m_image_height / m_threads.size();
+    const auto NUM_COLS_PER_THREAD = m_image_width / m_threads.size();
+
+    std::vector<std::vector<RenderParam>> params{};
+
+    for (auto i : std::views::iota(0ULL, m_threads.size())) {
+        auto start_x = 0;
+        auto end_x = m_image_width;
+        auto size_x = end_x - start_x;
+
+        auto start_y = NUM_ROWS_PER_THREAD * i;
+        auto end_y = std::min<size_t>(start_y + NUM_ROWS_PER_THREAD, m_image_height);
+        auto size_y = end_y - start_y;
+
+        auto param = RenderParam{};
+        param.light = &_light;
+        param.world = &_world;
+        param.pos_x = start_x;
+        param.size_x = size_x;
+        param.pos_y = start_y;
+        param.size_y = size_y;
+        params.push_back({ param });
+    }
+
+    for (auto i : std::views::iota(0ULL, m_threads.size())) {
+        m_threads[i].params = params[i];
+        m_threads[i].start_sema.s.release();
+    }
+
+    for (auto i : std::views::iota(0ULL, m_threads.size())) {
+        m_threads[i].finish_sema.s.acquire();
+    }
+}
+
+Camera::~Camera() {
+    for (auto& th : m_threads) {
+        auto stop = th.th.get_stop_source();
+        stop.request_stop();
+        th.start_sema.s.release();
+        th.th.join();
+    }
+}
