@@ -12,25 +12,29 @@
 #include <fstream>
 #include <hittable.hpp>
 #include <iostream>
+#include <memory>
 #include <ranges>
 
 #include <optional>
+#include <unordered_map>
 #include <vector>
 
 namespace cg_raytracing::geometry {
 class Mesh : public Hittable {
   public:
-    std::shared_ptr<Material> m_material;
+    std::vector<std::shared_ptr<StandardMaterial>> m_material;
     std::vector<math::Vec3> m_vertex_positions;
     std::vector<math::Vec3> m_vertex_normals;
     std::vector<std::array<float, 2>> m_face_uv;
     std::vector<std::array<size_t, 3>> m_indices;
+    std::unordered_map<std::string, std::shared_ptr<StandardMaterial>> m_material_map;
 
     math::Vec3 m_center;
 
     bool m_smooth_shading;
 
-    Mesh(cg_raytracing::math::Vec3 _center, std::shared_ptr<Material> _material);
+    Mesh(cg_raytracing::math::Vec3 _center,
+         std::shared_ptr<Material> _material);
 
     std::optional<HitRecord> Hit(const cg_raytracing::math::Ray &_ray,
                                  float _t_min = TMIN,
@@ -38,8 +42,10 @@ class Mesh : public Hittable {
 
     BoundingBox GetBoundingBox() const override;
 
-    std::expected<int, std::string>
-    LoadFromObj(std::filesystem::path _obj_path, float _scale);
+    std::expected<int, std::string> LoadFromObj(std::filesystem::path _obj_path,
+                                                float _scale);
+  private:
+    void ReadMaterialFromMtl(std::string _mtl_path);
 };
 
 } // namespace cg_raytracing::geometry

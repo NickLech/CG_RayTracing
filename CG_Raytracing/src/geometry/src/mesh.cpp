@@ -1,13 +1,16 @@
 #include "mesh.hpp"
-#include <memory>
+#include <cinttypes>
 #include <cstddef>
+#include <memory>
 #include <optional>
+#include <string>
 // #include <unistd.h> Exists only on POSIX/UNIX
 
 namespace cg_raytracing::geometry {
 
-Mesh::Mesh(cg_raytracing::math::Vec3 _center, std::shared_ptr<Material> _material) {
-    this->m_center   = _center;
+Mesh::Mesh(cg_raytracing::math::Vec3 _center,
+           std::shared_ptr<StandardMaterial> _material) {
+    this->m_center = _center;
     this->m_material = _material;
 }
 std::optional<HitRecord> Mesh::Hit(const cg_raytracing::math::Ray &_ray,
@@ -18,12 +21,14 @@ std::optional<HitRecord> Mesh::Hit(const cg_raytracing::math::Ray &_ray,
 
     for (auto triangle : this->m_indices | std::views::chunk(3)) {
 
-        Triangle current_triangle(m_vertex_positions[triangle[0][0] - 1] + this->m_center,
-                           m_vertex_positions[triangle[1][0] - 1] + this->m_center,
-                           m_vertex_positions[triangle[2][0] - 1] + this->m_center,
-                           this->m_material.get());
+        Triangle current_triangle(
+            m_vertex_positions[triangle[0][0] - 1] + this->m_center,
+            m_vertex_positions[triangle[1][0] - 1] + this->m_center,
+            m_vertex_positions[triangle[2][0] - 1] + this->m_center,
+            this->m_material.get());
 
-        auto hit_result = current_triangle.Hit(_ray, _t_min, closest_hit_distance);
+        auto hit_result =
+            current_triangle.Hit(_ray, _t_min, closest_hit_distance);
         if (hit_result) {
             closest_hit = hit_result;
             closest_hit_distance = hit_result->m_t;
@@ -103,6 +108,14 @@ Mesh::LoadFromObj(std::filesystem::path _obj_path, float _scale) {
                     state = 4;
                 if (pattern == "f")
                     state = 5;
+                if (pattern == "mttlib") {
+                    std::string material_file_string{
+                        std::string_view(part.next())};
+                    std::filesystem::path material_file_path =
+                        _obj_path.parent_path() / material_file_string;
+
+                    ReadMaterialFromMtl(material_file_path);
+                }
 
                 break;
             case 1:
@@ -111,9 +124,11 @@ Mesh::LoadFromObj(std::filesystem::path _obj_path, float _scale) {
                     this->m_vertex_positions.push_back(
                         math::Vec3(std::stof(pattern) * _scale, 0, 0));
                 } else if (info_index == 1) {
-                    this->m_vertex_positions.back().y = -std::stof(pattern) * _scale;
+                    this->m_vertex_positions.back().y =
+                        -std::stof(pattern) * _scale;
                 } else {
-                    this->m_vertex_positions.back().z = std::stof(pattern) * _scale;
+                    this->m_vertex_positions.back().z =
+                        std::stof(pattern) * _scale;
                 }
                 info_index += 1;
                 break;
@@ -166,4 +181,68 @@ Mesh::LoadFromObj(std::filesystem::path _obj_path, float _scale) {
     }
     return 0;
 }
+void Mesh::ReadMaterialFromMtl(std::string _mtl_path) {
+    std::ifstream mtl_file(_mtl_path);
+    if (!mtl_file.is_open()) return;
+
+    std::string line;
+    while (std::getline(mtl_file, line)) {
+        std::stringstream ss(line);
+        std::string command;
+        
+        if (!(ss >> command)) continue; 
+
+        if (command.empty() || command[0] == '#') continue;
+
+        if (command == "newmtl") {
+            std::string material_name;
+            if (ss >> material_name) {
+                auto new_material = std::make_shared<StandardMaterial>();
+                
+                this->m_material.push_back(new_material);
+                
+                this->m_material_map[material_name] = new_material;
+            }
+        }
+        else if (command == "Ns") {
+            if (!this->m_material.empty()) {
+                ss >> this->m_material.back()->m_ns;
+            }
+        }
+        else if (command == "Ni") {
+            if (!this->m_material.empty()) {
+                ss >> this->m_material.back()->m_ni;
+            }
+        }
+        else if (command == "d") {
+            if (!this->m_material.empty()) {
+                ss >> this->m_material.back()->m_d;
+            }
+        }
+        else if (command == "illum") {
+            if (!this->m_material.empty()) {
+                ss >> this->m_material.back()->m_illum; 
+            }
+        }
+        else if (command == "Ka") {
+            if (!this->m_material.empty()) {
+                auto& ka = this->m_material.back()->m_ka;
+                ss >> ka.x >> ka.y >> ka.z;
+            }
+        }
+        else if (command == "Kd") {
+            if (!this->m_material.empty()) {
+                auto& kd = this->m_material.back()->m_kd;
+                ss >> kd.x >> kd.y >> kd.z;
+            }
+        }
+        else if (command == "Ks") {
+            if (!this->m_material.empty()) {
+                auto& ks = this->m_material.back()->m_ks;
+                ss >> ks.x >> ks.y >> ks.z;
+            }
+        }
+    }
+}
+
 } // namespace cg_raytracing::geometry
