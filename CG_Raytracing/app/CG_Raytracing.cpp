@@ -316,7 +316,7 @@ int main() {
 
     auto world = World::CreateEmpty(1000.f);
 
-    std::shared_ptr<Mesh> train = std::make_shared<Mesh>(Vec3(0.0f, 0.0f, 200.0f), mat_sphere);
+    std::shared_ptr<Mesh> train = std::make_shared<Mesh>(Vec3(0.0f, 0.0f, 200.0f));
     // TODO: handle exception
     auto loader_status = train->LoadFromObj("./assets/meshes/Treno.obj", 10.0);
 

@@ -16,7 +16,7 @@ TEST_CASE("Mesh OBJ Loader") {
         auto dummy_material = std::make_shared<StandardMaterial>(
             StandardMaterial::Diffuse({0.5f, 0.5f, 0.5f})
         );
-        Mesh mesh(Vec3(0, 0, 0), dummy_material);
+        Mesh mesh(Vec3(0, 0, 0));
         auto result = mesh.LoadFromObj("./invalid.obj", 1.0);
 
         REQUIRE(result.has_value() == false);
@@ -28,7 +28,7 @@ TEST_CASE("Mesh OBJ Loader") {
         auto dummy_material = std::make_shared<StandardMaterial>(
             StandardMaterial::Diffuse({0.5f, 0.5f, 0.5f})
         );
-        Mesh mesh(Vec3(0, 0, 0), dummy_material);
+        Mesh mesh(Vec3(0, 0, 0));
         auto result = mesh.LoadFromObj(test_file_path, 1.0);
         REQUIRE(result == 0);
 
@@ -64,7 +64,7 @@ TEST_CASE("Mesh OBJ Loader") {
         auto dummy_material = std::make_shared<StandardMaterial>(
             StandardMaterial::Diffuse({0.5f, 0.5f, 0.5f})
         );
-        Mesh mesh(Vec3(0, 0, 0), dummy_material);
+        Mesh mesh(Vec3(0, 0, 0));
         auto result = mesh.LoadFromObj(test_file_path, 1.0);
 
         REQUIRE(result.has_value());

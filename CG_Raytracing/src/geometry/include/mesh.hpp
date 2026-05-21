@@ -28,13 +28,13 @@ class Mesh : public Hittable {
     std::vector<std::array<float, 2>> m_face_uv;
     std::vector<std::array<size_t, 3>> m_indices;
     std::unordered_map<std::string, std::shared_ptr<StandardMaterial>> m_material_map;
+    std::unordered_map<uint32_t, std::shared_ptr<StandardMaterial>> m_face_material_map;
 
     math::Vec3 m_center;
 
     bool m_smooth_shading;
 
-    Mesh(cg_raytracing::math::Vec3 _center,
-         std::shared_ptr<Material> _material);
+    Mesh(cg_raytracing::math::Vec3 _center);
 
     std::optional<HitRecord> Hit(const cg_raytracing::math::Ray &_ray,
                                  float _t_min = TMIN,

@@ -18,7 +18,7 @@ TEST_CASE("Mesh Bounding Box Validation Suite",
         auto dummy_material = std::make_shared<StandardMaterial>(
             StandardMaterial::Diffuse({0.5f, 0.5f, 0.5f})
         );
-        Mesh mesh(Vec3(0.0f, 0.0f, 0.0f), dummy_material);
+        Mesh mesh(Vec3(0.0f, 0.0f, 0.0f));
 
         auto load_result = mesh.LoadFromObj(test_file_path, 1.0);
         REQUIRE(load_result.has_value());
