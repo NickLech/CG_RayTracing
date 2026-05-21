@@ -18,7 +18,10 @@ add_library(Geometry STATIC
     "src/material.cpp"
 )
 
-target_include_directories(Geometry PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
+target_include_directories(Geometry PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include"
+    "${CMAKE_SOURCE_DIR}/src/common/include/"
+    "${CMAKE_SOURCE_DIR}/src/math/include/"
+)
 
 set_property(TARGET Geometry PROPERTY CXX_STANDARD 23)
 

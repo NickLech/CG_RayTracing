@@ -1,5 +1,4 @@
 #include <vec3.hpp>
-
 #include <random>
 
 namespace cg_raytracing::math {
@@ -19,4 +18,6 @@ namespace cg_raytracing::math {
 	Vec3 GetRandomVec3(float _min, float _max);
 
 	Vec3 GetRandomUnitVec3();
+
+	math::Vec3 RandomInHemisphere(const math::Vec3& _normal);
 }
