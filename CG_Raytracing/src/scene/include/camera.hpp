@@ -14,6 +14,8 @@
 #include <iostream>
 #include <vector>
 #include <memory>
+#include <thread>
+#include <semaphore>
 
 namespace cg_raytracing {
 namespace scene {
@@ -25,6 +27,46 @@ class Camera {
     uint32_t m_focal_length;
     uint32_t m_image_width;
     uint32_t m_image_height;
+
+    struct ZeroSema {
+        std::binary_semaphore s = std::binary_semaphore{0};
+
+        ZeroSema() : s{0} {}
+        ZeroSema(ZeroSema const& _other) : s{0} {}
+    };
+
+    struct OneSema {
+        std::binary_semaphore s = std::binary_semaphore{1};
+
+        OneSema() : s{1} {}
+        OneSema(OneSema const& _other) : s{1} {}
+    };
+    
+    struct RenderParam {
+        size_t pos_x, pos_y;
+        size_t size_x, size_y;
+        PointLight* light;
+        World const* world;
+    };
+
+    struct RenderThreadData {
+        std::jthread             th;
+        ZeroSema                 start_sema;
+        ZeroSema                 finish_sema;
+        std::vector<RenderParam> params;
+
+        RenderThreadData() :
+            th{}, 
+            start_sema{},
+            finish_sema{},
+            params{} {}
+
+        RenderThreadData(RenderThreadData&& _prev) noexcept :
+            th{std::move(_prev.th)},
+            start_sema{},
+            finish_sema{},
+            params{std::move(_prev.params)} {}
+    };
 
     // hardcoded the size for RGB
     std::array<uint8_t, Config::IMAGE_HEIGHT * Config::IMAGE_WIDTH * 3>
@@ -46,6 +88,8 @@ class Camera {
     // vector that indicates the offset to move 1px to the bottom
     cg_raytracing::math::Vec3 m_vertical_offset;
 
+    std::vector<RenderThreadData> m_threads;
+
     Camera(uint32_t _sensor_size_width = Config::SENSOR_SIZE_WIDTH,
            uint32_t _focal_length = Config::FOCAL_LENGTH,
            uint32_t _image_width = Config::IMAGE_WIDTH,
@@ -53,14 +97,17 @@ class Camera {
            const float *_position = Config::CAMERA_POSITION,
            const float *_direction = Config::CAMERA_DIRECTION);
 
-    //void BurstRays();
-    //void BurstRays(cg_raytracing::scene::PointLight& light);
+    void RenderThreadMain(std::stop_token _tok, uint32_t _index);
+    void RenderThreadRender(RenderThreadData& _data);
+    void RenderThreadRenderBlock(RenderThreadData const& _data, RenderParam _param);
 
     void BurstRays(PointLight& _light, 
         World const& _world);
 
     void Rotate(const math::Vec3 &_rotation_angles);
     void Translate(const math::Vec3 &_translation_vector);
+
+    ~Camera();
 };
 } // namespace scene
 } // namespace cg_raytracing
