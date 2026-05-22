@@ -4,6 +4,7 @@
 #include <cstddef>
 #include <memory>
 #include <optional>
+#include <print>
 #include <string>
 // #include <unistd.h> Exists only on POSIX/UNIX
 
@@ -86,76 +87,115 @@ Mesh::LoadFromObj(std::filesystem::path _obj_path, float _scale) {
     std::string line;
 
     while (std::getline(obj_file, line)) {
-        std::stringstream ss(line);
-        std::string command;
-        std::string material_name;
+        // 0 -> check what type of input it is
+        // 1 -> (v) vertices
+        // 2 -> (vn) vertices normals
+        // 3 -> (vt) uv coordinates
+        // 4 -> (s) smooth shading
+        // 5 -> (f) faces v/vt/vn
+        uint8_t state = 0;
+        uint8_t info_index = 0;
 
-        if (!(ss >> command))
-            continue;
+        for (auto part : std::views::split(line, ' ')) {
+            std::string pattern{std::string_view(part)};
+            switch (state) {
+            case 0:
+                if (pattern == "v")
+                    state = 1;
+                if (pattern == "vn")
+                    state = 2;
+                if (pattern == "vt")
+                    state = 3;
+                if (pattern == "s")
+                    state = 4;
+                if (pattern == "f")
+                    state = 5;
+                if (pattern == "mtllib")
+                    state = 6;
+                if (pattern == "usemtl")
+                    state = 7;
 
-        if (command == "v") {
-            math::Vec3 new_vec;
-            ss >> new_vec.x >> new_vec.y >> new_vec.z;
-            this->m_vertex_normals.push_back(new_vec);
-        }
-        if (command == "vn") {
-            math::Vec3 new_vec;
-            ss >> new_vec.x >> new_vec.y >> new_vec.z;
-            new_vec *= _scale;
-            this->m_vertex_positions.push_back(new_vec);
-        }
-        if (command == "vt") {
-            std::array<float, 2> new_normal_map;
-            ss >> new_normal_map[0] >> new_normal_map[1];
-            this->m_face_uv.push_back(new_normal_map);
-        }
-        if (command == "s") {
-            uint8_t value;
-            ss >> value;
-            if (value == 0) {
-                this->m_smooth_shading = true;
-            } else {
-                this->m_smooth_shading = false;
-            }
-        }
-        if (command == "f") {
-
-            for (int i = 0; i < 3; i++) {
-                std::array<size_t, 3> new_face;
-                std::string vertex_info;
-                ss >> vertex_info;
-
-                for (auto vertex_index_view :
-                     vertex_info | std::views::split('/')) {
-                    std::string vertex_index_str{
-                        std::string_view(vertex_index_view)};
-                    if (vertex_index_str.empty()) {
-                        vertex_index_str = "0";
-                    }
-                    new_face[i] = std::stoul(vertex_index_str);
+                break;
+            case 1:
+                // TODO:append to vertex array
+                if (info_index == 0) {
+                    this->m_vertex_positions.push_back(
+                        math::Vec3(std::stof(pattern) * _scale, 0, 0));
+                } else if (info_index == 1) {
+                    this->m_vertex_positions.back().y =
+                        std::stof(pattern) * _scale;
+                } else {
+                    this->m_vertex_positions.back().z =
+                        std::stof(pattern) * _scale;
                 }
-                this->m_indices.push_back(new_face);
-            }
-        }
-        if (command == "mttlib") {
-            std::string material_file_string;
-            ss >> material_file_string;
-            std::filesystem::path material_file_path =
-                _obj_path.parent_path() / material_file_string;
+                info_index += 1;
+                break;
+            case 2:
+                // TODO:append to normal array
+                if (info_index == 0) {
+                    this->m_vertex_normals.push_back(
+                        math::Vec3(std::stof(pattern), 0, 0));
+                } else if (info_index == 1) {
+                    this->m_vertex_normals.back().y = std::stof(pattern);
+                } else {
+                    this->m_vertex_normals.back().z = std::stof(pattern);
+                }
+                info_index += 1;
+                break;
+            case 3:
+                // TODO:append to uv coordinate array
+                if (info_index == 0) {
+                    this->m_face_uv.push_back(
+                        std::array<float, 2>{std::stof(pattern), 0});
 
-            ReadMaterialFromMtl(material_file_path);
-        }
-        if (command == "usemtl") {
-            ss >> material_name;
-            if (this->m_material_map.find(material_name) !=
-                this->m_material_map.end()) {
-                this->m_face_material_map[this->m_indices.size() / 3 - 1] =
-                    this->m_material_map[material_name];
+                } else {
+                    this->m_face_uv.back()[1] = std::stof(pattern);
+                }
+                info_index += 1;
+                break;
+            case 4: {
+                if (pattern == "0")
+                    this->m_smooth_shading = false;
+                else
+                    this->m_smooth_shading = true;
+                break;
+            }
+            case 5: {
+                size_t count = 0;
+                for (auto triangle_index : std::views::split(part, '/')) {
+                    std::string string_index{std::string_view(triangle_index)};
+                    size_t int_index = std::stoi(string_index);
+                    if (count == 0) {
+                        this->m_indices.push_back(std::array<size_t, 3>());
+                    }
+
+                    this->m_indices.back()[count] = int_index;
+
+                    count += 1;
+                }
+                break;
+            }
+            case 6: {
+                std::filesystem::path material_file_path =
+                    _obj_path.parent_path() / pattern;
+
+                ReadMaterialFromMtl(material_file_path);
+                break;
+            }
+            case 7: {
+
+                if (this->m_material_map.find(pattern) !=
+                    this->m_material_map.end()) {
+                    this->m_face_material_map[this->m_indices.size() / 3 - 1] =
+                        this->m_material_map[pattern];
+                }
+            }
             }
         }
     }
     return 0;
 }
+
 void Mesh::ReadMaterialFromMtl(std::string _mtl_path) {
     std::ifstream mtl_file(_mtl_path);
     if (!mtl_file.is_open())
