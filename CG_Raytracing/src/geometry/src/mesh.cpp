@@ -26,7 +26,7 @@ std::optional<HitRecord> Mesh::Hit(const cg_raytracing::math::Ray &_ray,
             m_vertex_positions[triangle[0][0] - 1] + this->m_center,
             m_vertex_positions[triangle[1][0] - 1] + this->m_center,
             m_vertex_positions[triangle[2][0] - 1] + this->m_center,
-            this->m_face_material_map.at(triangle_index).get());
+            this->m_face_material_vector[triangle_index].get());
 
         auto hit_result =
             current_triangle.Hit(_ray, _t_min, closest_hit_distance);
@@ -85,6 +85,8 @@ Mesh::LoadFromObj(std::filesystem::path _obj_path, float _scale) {
     }
 
     std::string line;
+    uint32_t face_count = 0;
+    std::shared_ptr<StandardMaterial> current_material;
 
     while (std::getline(obj_file, line)) {
         // 0 -> check what type of input it is
@@ -95,8 +97,6 @@ Mesh::LoadFromObj(std::filesystem::path _obj_path, float _scale) {
         // 5 -> (f) faces v/vt/vn
         uint8_t state = 0;
         uint8_t info_index = 0;
-        uint32_t face_count = 0;
-        std::shared_ptr<Material> current_material;
 
         for (auto part : std::views::split(line, ' ')) {
             std::string pattern{std::string_view(part)};
@@ -110,10 +110,9 @@ Mesh::LoadFromObj(std::filesystem::path _obj_path, float _scale) {
                     state = 3;
                 if (pattern == "s")
                     state = 4;
-                if (pattern == "f"){
+                if (pattern == "f") {
                     state = 5;
-                    this->m_face_material_map[face_count] = current_material;
-                    face_count++;
+                    this->m_face_material_vector.push_back(current_material);
                 }
                 if (pattern == "mtllib")
                     state = 6;

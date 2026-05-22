@@ -28,7 +28,7 @@ class Mesh : public Hittable {
     std::vector<std::array<float, 2>> m_face_uv;
     std::vector<std::array<size_t, 3>> m_indices;
     std::unordered_map<std::string, std::shared_ptr<StandardMaterial>> m_material_map;
-    std::unordered_map<uint32_t, std::shared_ptr<StandardMaterial>> m_face_material_map;
+    std::vector<std::shared_ptr<StandardMaterial>> m_face_material_vector;
 
     math::Vec3 m_center;
 

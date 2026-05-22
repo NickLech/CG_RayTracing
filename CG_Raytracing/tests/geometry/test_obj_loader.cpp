@@ -161,6 +161,7 @@ TEST_CASE("obj + mtl file loader") {
 
         REQUIRE(result == 0);
         REQUIRE(mesh.m_vertex_positions.size() == 226);
+        REQUIRE(mesh.m_face_material_vector.size() == 444);
 
         REQUIRE(mesh.m_material.size() == 3);
         REQUIRE(mesh.m_material_map.size() == 3);
