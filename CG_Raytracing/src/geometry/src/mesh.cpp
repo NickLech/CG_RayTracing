@@ -95,6 +95,8 @@ Mesh::LoadFromObj(std::filesystem::path _obj_path, float _scale) {
         // 5 -> (f) faces v/vt/vn
         uint8_t state = 0;
         uint8_t info_index = 0;
+        uint32_t face_count = 0;
+        std::shared_ptr<Material> current_material;
 
         for (auto part : std::views::split(line, ' ')) {
             std::string pattern{std::string_view(part)};
@@ -108,8 +110,11 @@ Mesh::LoadFromObj(std::filesystem::path _obj_path, float _scale) {
                     state = 3;
                 if (pattern == "s")
                     state = 4;
-                if (pattern == "f")
+                if (pattern == "f"){
                     state = 5;
+                    this->m_face_material_map[face_count] = current_material;
+                    face_count++;
+                }
                 if (pattern == "mtllib")
                     state = 6;
                 if (pattern == "usemtl")
@@ -186,8 +191,7 @@ Mesh::LoadFromObj(std::filesystem::path _obj_path, float _scale) {
 
                 if (this->m_material_map.find(pattern) !=
                     this->m_material_map.end()) {
-                    this->m_face_material_map[this->m_indices.size() / 3 - 1] =
-                        this->m_material_map[pattern];
+                    current_material = this->m_material_map[pattern];
                 }
             }
             }
