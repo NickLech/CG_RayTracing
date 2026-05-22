@@ -63,7 +63,7 @@ Vec3 &Vec3::operator=(const Vec3 &_other) {
 }
 
 double Vec3::DotProduct(const Vec3 &_other) const {
-    return this->x * _other.x + this->y * _other.y + this->z * _other.z;
+    return (double)this->x * _other.x + this->y * _other.y + this->z * _other.z;
 }
 Vec3 Vec3::CrossProduct(const Vec3 &_other) const {
     return Vec3(this->y * _other.z - this->z * _other.y,
@@ -75,15 +75,15 @@ Vec3 Vec3::operator-(const Vec3 &_other) const {
     return Vec3(this->x - _other.x, this->y - _other.y, this->z - _other.z);
 }
 
-float Vec3::dot(const Vec3 &_other) const {
-    return this->x * _other.x + this->y * _other.y + this->z * _other.z;
+double Vec3::dot(const Vec3 &_other) const {
+    return (double)this->x * _other.x + this->y * _other.y + this->z * _other.z;
 }
 
-float Vec3::length_squared() const {
-    return this->x * this->x + this->y * this->y + this->z * this->z;
+double Vec3::length_squared() const {
+    return (double)this->x * this->x + this->y * this->y + this->z * this->z;
 }
 
-float Vec3::length() const {
+double Vec3::length() const {
     return std::sqrt(length_squared());
 }
 
