@@ -85,8 +85,7 @@ TEST_CASE("Mesh OBJ Loader") {
     }
 }
 
-TEST_CASE("Mesh Material File Parsing Suite",
-          "[geometry][mesh][material][parser]") {
+TEST_CASE("material file loader test") {
     using namespace cg_raytracing::geometry;
     using namespace cg_raytracing::math;
 
@@ -147,4 +146,50 @@ TEST_CASE("Mesh Material File Parsing Suite",
         REQUIRE(plastic_mat->m_kd.z == Catch::Approx(0.000000f));
         REQUIRE(plastic_mat->m_ns == Catch::Approx(50.0f));
     }
+}
+TEST_CASE("obj + mtl file loader") {
+    using namespace cg_raytracing::geometry;
+    using namespace cg_raytracing::math;
+    std::filesystem::path test_obj_path = "./assets/Lampada.obj";
+
+    REQUIRE(std::filesystem::exists(test_obj_path));
+
+    SECTION("Lampada"){
+        Mesh mesh(Vec3(0, 0, 0));
+        auto result = mesh.LoadFromObj(test_obj_path, 1.0);
+
+
+        REQUIRE(result == 0);
+        REQUIRE(mesh.m_vertex_positions.size() == 226);
+
+        REQUIRE(mesh.m_material.size() == 3);
+        REQUIRE(mesh.m_material_map.size() == 3);
+
+        REQUIRE(mesh.m_material_map.contains("base"));
+        REQUIRE(mesh.m_material_map.contains("cappello"));
+        REQUIRE(mesh.m_material_map.contains("lampada"));
+
+        auto wood_mat = mesh.m_material_map["lampada"];
+        REQUIRE(wood_mat != nullptr);
+
+        // Verify basic uniform floating-point definitions
+        REQUIRE(wood_mat->m_ns == Catch::Approx(250.0f));
+        REQUIRE(wood_mat->m_ni == Catch::Approx(1.500000f));
+        REQUIRE(wood_mat->m_d  == Catch::Approx(1.000000f));
+        REQUIRE(wood_mat->m_illum == 2);
+
+        // Verify vector transformations matching the parsed strings
+        REQUIRE(wood_mat->m_ka.x == Catch::Approx(1.000000f));
+        REQUIRE(wood_mat->m_ka.y == Catch::Approx(1.000000f));
+        REQUIRE(wood_mat->m_ka.z == Catch::Approx(1.000000f));
+
+        REQUIRE(wood_mat->m_kd.x == Catch::Approx(0.800016f));
+        REQUIRE(wood_mat->m_kd.y == Catch::Approx(0.787980f));
+        REQUIRE(wood_mat->m_kd.z == Catch::Approx(0.141787f));
+
+        REQUIRE(wood_mat->m_ks.x == Catch::Approx(0.500000f));
+        REQUIRE(wood_mat->m_ks.y == Catch::Approx(0.500000f));
+        REQUIRE(wood_mat->m_ks.z == Catch::Approx(0.500000f));
+    }
+
 }
