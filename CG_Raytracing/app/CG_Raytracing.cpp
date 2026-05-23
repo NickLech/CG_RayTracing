@@ -326,10 +326,10 @@ int main() {
     // hittables = ObjLoader::Load("model.obj", &mat);
 
     auto mat_sphere = std::make_shared<StandardMaterial>(
-    StandardMaterial::Diffuse({0.7f, 0.2f, 0.2f})
+    StandardMaterial::Diffuse({0.7f, 0.2f, 0.2f}, {.4f, .4f, .4f})
     );
     auto mat_cube = std::make_shared<StandardMaterial>(
-        StandardMaterial::Metal({0.2f, 0.2f, 0.8f}, 0.5f)
+        StandardMaterial::Diffuse({0.2f, 0.2f, 0.8f}, {.5f, .5f, .5f })
     );
     auto mat_train = std::make_shared<StandardMaterial>(
         StandardMaterial::Diffuse({0.7f, 0.2f, 0.2f})
@@ -341,8 +341,8 @@ int main() {
     // TODO: handle exception
     // auto loader_status = train->LoadFromObj("./assets/meshes/Treno.obj");
 
-    world.AddObject(std::make_shared<Sphere>(Vec3(-35.0f, 0.0f, 200.0f), 30.f, mat_sphere));
-    world.AddObject(std::make_shared<Cube>(Vec3(35.0f, 0.0f, 200.0f), 30.f, mat_cube));
+    world.AddObject(std::make_shared<Sphere>(Vec3(0.0f, 0.0f, 200.0f), 30.f, mat_sphere));
+    world.AddObject(std::make_shared<Cube>(Vec3(0.0f, 85.0f, 200.0f), 50.f, mat_cube));
     // world.AddObject(std::make_shared<Sphere>(Vec3(0.0f, 0.0f, 250.0f), 20.f, mat_cube));
     // world.AddObject(train);
 

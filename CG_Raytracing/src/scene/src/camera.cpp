@@ -115,7 +115,6 @@ void Camera::RenderThreadRenderBlock(RenderThreadData const& _data, RenderParam 
                 rays_to_follow.push({ ray, 0 });
 
                 auto final_color = math::Vec3(1.f, 1.f, 1.f);
-                auto num_accum = .0f;
 
                 while (!rays_to_follow.empty()) {
                     auto [curr_ray, iteration] = rays_to_follow.top();
@@ -125,28 +124,23 @@ void Camera::RenderThreadRenderBlock(RenderThreadData const& _data, RenderParam 
                     hit = world->Hit(curr_ray);
 
                     if (hit) {
-                        // Absorbtion
-                        final_color *= .5f;
+                        hit->m_point = math::Ray(hit->m_point, hit->m_normal).At(geometry::Hittable::TMIN * 1.1f);
+                        auto scattered = hit->m_material->Scatter(curr_ray, hit.value());
 
-                        num_accum++;
+                        if (!scattered.has_value()) {
+                            final_color = math::Vec3(); // Total absorbtion
+                            break;
+                        }
+
+                        auto [direction, albedo] = scattered.value();
+
+                        final_color = final_color * albedo;
 
                         if (Config::MAX_DEPTH == iteration + 1) {
                             continue;
                         }
 
-                        hit->m_point = math::Ray(hit->m_point, hit->m_normal).At(geometry::Hittable::TMIN * 2.f);
-                        auto directions = hit->m_material->Scatter(curr_ray, hit.value(),
-                            Config::RAY_PER_SCATTER);
-
-                        if (0 == directions.size()) {
-                            final_color = math::Vec3(); // Total absorbtion
-                            break;
-                        }
-
-                        for (auto& dir : directions) {
-                            //dir.OffsetAlongNormal(hit->m_normal);
-                            rays_to_follow.push({ dir, iteration + 1 });
-                        }
+                        rays_to_follow.push({ direction, iteration + 1});
                     }
                 }
 
