@@ -45,6 +45,10 @@ class Mesh : public Hittable {
     std::expected<int, std::string> LoadFromObj(std::filesystem::path _obj_path,
                                                 float _scale);
     void ReadMaterialFromMtl(std::string _mtl_path);
+
+    void Rotate(const math::Vec3 &_rotation_angles);
+
+    void Translate(const math::Vec3 &_translation_vector);
 };
 
 } // namespace cg_raytracing::geometry

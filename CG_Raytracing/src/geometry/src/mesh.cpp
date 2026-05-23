@@ -258,5 +258,16 @@ void Mesh::ReadMaterialFromMtl(std::string _mtl_path) {
         }
     }
 }
+void Mesh::Rotate(const math::Vec3 &_rotation_angles) {
+    // TODO: optimize the bounding box calculation because this sucks
+    for (auto &vertex : this->m_vertex_positions) {
+        vertex.Rotate(_rotation_angles);
+    }
+}
 
+void Mesh::Translate(const math::Vec3 &_translation_vector) {
+    for (auto &vertex : this->m_vertex_positions) {
+        vertex += _translation_vector;
+    }
+}
 } // namespace cg_raytracing::geometry
