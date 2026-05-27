@@ -34,7 +34,7 @@ namespace cg_raytracing::geometry {
         rec.m_t        = root;
         rec.m_point    = _ray.At(root);
         rec.m_material = m_material.get();
-        rec.SetFaceNormal(_ray, (rec.m_point - m_center) * (1.0f / m_radius));
+        rec.SetFaceNormal(_ray, ((rec.m_point - m_center) * (1.0f / m_radius)));
     
         return rec;
     }

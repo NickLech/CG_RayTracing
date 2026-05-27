@@ -22,11 +22,11 @@ class Vec3 {
     Vec3& operator=(const Vec3 &_other);
 
     double DotProduct(const Vec3 &_other) const;
-    float  dot(const Vec3 &_other) const;
+    double  dot(const Vec3 &_other) const;
     Vec3   CrossProduct(const Vec3 &_other) const;
 
-    float length_squared() const;
-    float length() const;
+    double length_squared() const;
+    double length() const;
     Vec3  normalized() const;
 
 

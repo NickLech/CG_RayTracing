@@ -131,7 +131,7 @@ void HandleKeyDown(SDL_Event &_ev,
 
     if (must_update) {
         _my_camera->BurstRays(_light, _world);
-        _tex.CopyFromBuffer(_my_camera->m_img_buf.data(), 0, 0, 0,
+        _tex.CopyFromBuffer(std::bit_cast<uint8_t const*>(_my_camera->m_img_buf.data()), 0, 0, 0,
             _tex.GetWidth(), _tex.GetHeight(),
             cg_raytracing::PixelFormat::RGB,
             cg_raytracing::PixelDataType::UNSIGNED_BYTE);
@@ -305,10 +305,10 @@ int main() {
     // hittables = ObjLoader::Load("model.obj", &mat);
 
     auto mat_sphere = std::make_shared<StandardMaterial>(
-    StandardMaterial::Diffuse({0.7f, 0.2f, 0.2f})
+    StandardMaterial::Diffuse({0.7f, 0.2f, 0.2f}, {.4f, .4f, .4f})
     );
     auto mat_cube = std::make_shared<StandardMaterial>(
-        StandardMaterial::Metal({0.2f, 0.2f, 0.8f}, 0.5f)
+        StandardMaterial::Diffuse({0.2f, 0.2f, 0.8f}, {.5f, .5f, .5f })
     );
     auto mat_train = std::make_shared<StandardMaterial>(
         StandardMaterial::Diffuse({0.7f, 0.2f, 0.2f})
@@ -321,10 +321,10 @@ int main() {
     auto loader_status = train->LoadFromObj("./assets/meshes/Lampada.obj", 10.0);
     train->Rotate(Vec3(0.5f, 0.0f, 0.0f));
 
-    world.AddObject(std::make_shared<Sphere>(Vec3(-40.0f, 0.0f, 200.0f), 30.f, mat_sphere));
-    world.AddObject(std::make_shared<Cube>(Vec3(40.0f, 0.0f, 200.0f), 20.f, mat_cube));
-    world.AddObject(std::make_shared<Sphere>(Vec3(0.0f, 0.0f, 250.0f), 20.f, mat_cube));
-    world.AddObject(train);
+    world.AddObject(std::make_shared<Sphere>(Vec3(0.0f, 0.0f, 200.0f), 30.f, mat_sphere));
+    world.AddObject(std::make_shared<Cube>(Vec3(0.0f, 85.0f, 200.0f), 50.f, mat_cube));
+    // world.AddObject(std::make_shared<Sphere>(Vec3(0.0f, 0.0f, 250.0f), 20.f, mat_cube));
+    // world.AddObject(train);
 
     world.UpdateTree();
 
@@ -337,7 +337,7 @@ int main() {
     std::println(std::cout, "Took {} ms", (double)diff / 1e3);
 
 
-    tex.CopyFromBuffer(my_camera->m_img_buf.data(), 0, 0, 0, tex.GetWidth(),
+    tex.CopyFromBuffer(std::bit_cast<uint8_t const*>(my_camera->m_img_buf.data()), 0, 0, 0, tex.GetWidth(),
                        tex.GetHeight(), cg_raytracing::PixelFormat::RGB,
                        cg_raytracing::PixelDataType::UNSIGNED_BYTE);
     tex.BindTexture(GL_TEXTURE_2D);

@@ -9,6 +9,7 @@
 
 #include <algorithm>
 #include <ranges>
+#include <stack>
 
 
 using namespace cg_raytracing::scene;
@@ -102,54 +103,66 @@ void Camera::RenderThreadRenderBlock(RenderThreadData const& _data, RenderParam 
                     y * this->m_image_width + x
                 ];
 
-            std::optional<geometry::HitRecord> hit{};
+            uint32_t r{}, g{}, b{};
 
-            hit = world->Hit(ray);
+            float t =
+                static_cast<float>(y) /
+                this->m_image_height;
 
-            // Shading
-            if (hit) {
+            for (auto curr_iteration : std::views::iota(0U, Config::RENDER_ITERATION)) {
+                // Stack of rays, together with the iteration number
+                std::stack<std::pair<math::Ray, size_t>> rays_to_follow{};
+                rays_to_follow.push({ ray, 0 });
 
-                // Final color
-                math::Vec3 color = hit->m_material->Shade(
-                    *hit,
-                    light->m_position,
-                    light->m_color,
-                    light->m_intensity,
-                    ray
-                );
+                auto final_color = math::Vec3(1.f, 1.f, 1.f);
+
+                while (!rays_to_follow.empty()) {
+                    auto [curr_ray, iteration] = rays_to_follow.top();
+                    rays_to_follow.pop();
+
+                    std::optional<geometry::HitRecord> hit{};
+                    hit = world->Hit(curr_ray);
+
+                    if (hit) {
+                        hit->m_point = math::Ray(hit->m_point, hit->m_normal).At(geometry::Hittable::TMIN * 1.1f);
+                        auto scattered = hit->m_material->Scatter(curr_ray, hit.value());
+
+                        if (!scattered.has_value()) {
+                            final_color = math::Vec3(); // Total absorbtion
+                            break;
+                        }
+
+                        auto [direction, albedo] = scattered.value();
+
+                        final_color = final_color * albedo;
+
+                        if (Config::MAX_DEPTH == iteration + 1) {
+                            continue;
+                        }
+
+                        rays_to_follow.push({ direction, iteration + 1});
+                    }
+                }
+
+                // if(0 == num_accum) {
+                final_color = final_color * math::Vec3(0.f, ((1.0f - t) * 180 + t * 80) / 255.f, 1.f);
+                // }
+
 
                 // Clamp to [0,1]
-                color.x = std::clamp(color.x, 0.0f, 1.0f);
-                color.y = std::clamp(color.y, 0.0f, 1.0f);
-                color.z = std::clamp(color.z, 0.0f, 1.0f);
+                final_color.x = std::clamp(final_color.x, 0.0f, 1.0f);
+                final_color.y = std::clamp(final_color.y, 0.0f, 1.0f);
+                final_color.z = std::clamp(final_color.z, 0.0f, 1.0f);
 
                 // RGB output
-                this->m_img_buf[base_idx] =
-                    static_cast<uint8_t>(color.x * 255.0f);
-
-                this->m_img_buf[base_idx + 1] =
-                    static_cast<uint8_t>(color.y * 255.0f);
-
-                this->m_img_buf[base_idx + 2] =
-                    static_cast<uint8_t>(color.z * 255.0f);
-
+                r += static_cast<uint8_t>(final_color.x * 255.0f);
+                g += static_cast<uint8_t>(final_color.y * 255.0f);
+                b += static_cast<uint8_t>(final_color.z * 255.0f);
             }
-            else {
 
-                // Background gradient
-                float t =
-                    static_cast<float>(y) /
-                    this->m_image_height;
-
-                this->m_img_buf[base_idx] = 0;
-
-                this->m_img_buf[base_idx + 1] =
-                    static_cast<uint8_t>(
-                        (1.0f - t) * 180 + t * 80
-                        );
-
-                this->m_img_buf[base_idx + 2] = 255;
-            }
+            this->m_img_buf[base_idx + 0] = r / Config::RENDER_ITERATION;
+            this->m_img_buf[base_idx + 1] = g / Config::RENDER_ITERATION;
+            this->m_img_buf[base_idx + 2] = b / Config::RENDER_ITERATION;
         }
     }
 }
