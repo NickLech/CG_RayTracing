@@ -23,6 +23,8 @@ class Ray {
     void Rotate(const Vec3 &_rotation_angles);
 
     void Translate(const math::Vec3 &_translation_vector);
+
+    void OffsetAlongNormal(Vec3 const& _n);
 };
 } // namespace math
 } // namespace cg_raytracing

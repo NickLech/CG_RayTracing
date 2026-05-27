@@ -14,7 +14,7 @@ cg_raytracing::math::Vec3 StandardMaterial::Shade(
     const cg_raytracing::math::Ray&  _ray) const {
 
     cg_raytracing::math::Vec3 light_dir = (_light_pos - _hit.m_point).normalized();
-    float diffuse = std::max(_hit.m_normal.dot(light_dir), 0.0f);
+    float diffuse = std::max<float>(_hit.m_normal.dot(light_dir), 0.0f);
 
     cg_raytracing::math::Vec3 color{};
     switch (m_illum) {
@@ -24,7 +24,7 @@ cg_raytracing::math::Vec3 StandardMaterial::Shade(
         case 2: {
             cg_raytracing::math::Vec3 view_dir    = (_ray.m_origin - _hit.m_point).normalized();
             cg_raytracing::math::Vec3 reflect_dir = (_hit.m_normal * 2.0f * _hit.m_normal.dot(light_dir) - light_dir).normalized();
-            float spec = std::pow(std::max(view_dir.dot(reflect_dir), 0.0f), m_ns);
+            float spec = std::pow(std::max<float>(view_dir.dot(reflect_dir), 0.0f), m_ns);
             color = (m_ka + m_kd * diffuse + m_ks * spec) * _light_color * _light_intensity;
             break;
         }
@@ -38,22 +38,13 @@ cg_raytracing::math::Vec3 StandardMaterial::Shade(
 
 /// Generates _num_samples scattered rays from the hit point,
 /// each with a random direction in the hemisphere of the surface normal.
-std::vector<math::Ray> StandardMaterial::Scatter(
+std::optional<std::pair<math::Ray, math::Vec3>> StandardMaterial::Scatter(
     const math::Ray& _ray_in,
-    const HitRecord& _hit,
-    int              _num_samples) const {
+    const HitRecord& _hit) const {
 
-    std::vector<math::Ray> scattered;
-    // Pre-allocate to avoid repeated heap allocations in the loop
-    scattered.reserve(_num_samples);
+    math::Vec3 scatter_dir = RandomInHemisphere(_hit.m_normal);
 
-    for (int i = 0; i < _num_samples; i++) {
-        math::Vec3 scatter_dir = RandomInHemisphere(_hit.m_normal);
-        // Construct ray in-place: origin at hit point, random direction
-        scattered.emplace_back(_hit.m_point, scatter_dir);
-    }
-
-    return scattered;
+    return { {math::Ray{_hit.m_point, scatter_dir}, m_ka} };
 }
 
 } // namespace cg_raytracing::geometry

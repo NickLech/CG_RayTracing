@@ -31,4 +31,6 @@ inline const float CAMERA_PRESETS[][2][3] = {
         {0.0f, 0.15f, 0.0f}
     }
 };
+
+inline constexpr uint32_t MAX_DEPTH = 50;
 } // namespace Config
