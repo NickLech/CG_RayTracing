@@ -59,4 +59,14 @@ namespace cg_raytracing::math {
 
 		return random_dir.normalized();
 	}
+
+	Vec3 GetRandomVecAroundPoint(Vec3 _p, Vec3 _top_left, float _hoz_offset, float _vert_offset) {
+		auto sample_square = [_p]() {
+			return Vec3(GetRandomFloat() - .5f, GetRandomFloat() - .5f, .0f);
+		};
+
+		const auto offset = sample_square();
+		
+		return _top_left + (offset + _p) * Vec3(_hoz_offset, _vert_offset, .0f);
+	}
 }
