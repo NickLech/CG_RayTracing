@@ -78,7 +78,7 @@ class Camera {
     // create the rays for each pixel so not to compute them every time we need
     // to render
     std::array<cg_raytracing::math::Ray,
-               Config::IMAGE_HEIGHT * Config::IMAGE_WIDTH>
+               Config::IMAGE_HEIGHT * Config::IMAGE_WIDTH * Config::RAY_PER_PIXEL>
         m_rays_matrix;
 
     // vector that connects the camera focal center to the top left corner.

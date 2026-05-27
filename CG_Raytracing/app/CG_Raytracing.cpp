@@ -272,7 +272,7 @@ int main() {
                    1, Config::IMAGE_WIDTH, Config::IMAGE_HEIGHT,
                    cg_raytracing::TextureFormat::RGB8)
                    .value();
-    tex.SetUpscaleFilter(cg_raytracing::SamplerFilter::LINEAR);
+    tex.SetUpscaleFilter(cg_raytracing::SamplerFilter::NEAREST);
     tex.SetDownscaleFilter(cg_raytracing::SamplerFilter::LINEAR);
     // std::vector<uint8_t> temp_buf{};
     // temp_buf.resize(tex.GetSizeBytes());

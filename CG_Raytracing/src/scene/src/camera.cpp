@@ -6,6 +6,7 @@
 #include "triangle.hpp"
 #include "vec3.hpp"
 #include "point_light.hpp"
+#include "random_prob.hpp"
 
 #include <algorithm>
 #include <ranges>
@@ -40,13 +41,22 @@ Camera::Camera(uint32_t _sensor_size_width, uint32_t _focal_length,
     // calculate the direction of the rays for each pixel
     for (uint32_t y = 0; y < this->m_image_height; y++) {
         for (uint32_t x = 0; x < this->m_image_width; x++) {
-            math::Vec3 ray_direction =
-                top_left + horizontal_offset * x + vertical_offset * y;
-            ray_direction.Rotate(this->m_direction);
-            this->m_rays_matrix[y * this->m_image_width + x].SetDirection(
-                ray_direction);
-            this->m_rays_matrix[y * this->m_image_width + x].SetOrigin(
-                this->m_position);
+            for (uint32_t ray_index = 0; ray_index < Config::RAY_PER_PIXEL; ray_index++) {
+                auto ray_direction = math::GetRandomVecAroundPoint(math::Vec3(x, y, m_position.z),
+                    top_left, horizontal_offset.x, vertical_offset.y);
+                ray_direction.Rotate(this->m_direction);
+                this->m_rays_matrix[(y * this->m_image_width + x) * Config::RAY_PER_PIXEL + ray_index].SetDirection(
+                    ray_direction);
+                this->m_rays_matrix[(y * this->m_image_width + x) * Config::RAY_PER_PIXEL + ray_index].SetOrigin(
+                    this->m_position);
+            }
+            //math::Vec3 ray_direction =
+            //    top_left + horizontal_offset * x + vertical_offset * y;
+            //ray_direction.Rotate(this->m_direction);
+            //this->m_rays_matrix[(y * this->m_image_width + x) * Config::RAY_PER_PIXEL].SetDirection(
+            //    ray_direction);
+            //this->m_rays_matrix[(y * this->m_image_width + x) * Config::RAY_PER_PIXEL].SetOrigin(
+            //    this->m_position);
         }
     }
 
@@ -98,67 +108,77 @@ void Camera::RenderThreadRenderBlock(RenderThreadData const& _data, RenderParam 
             uint32_t base_idx =
                 (y * this->m_image_width + x) * 3;
 
-            const math::Ray& ray =
-                this->m_rays_matrix[
-                    y * this->m_image_width + x
-                ];
-
             uint32_t r{}, g{}, b{};
 
-            float t =
-                static_cast<float>(y) /
-                this->m_image_height;
+            for (uint32_t ray_index = 0; ray_index < Config::RAY_PER_PIXEL; ray_index++) {
+                
 
-            for (auto curr_iteration : std::views::iota(0U, Config::RENDER_ITERATION)) {
-                // Stack of rays, together with the iteration number
-                std::stack<std::pair<math::Ray, size_t>> rays_to_follow{};
-                rays_to_follow.push({ ray, 0 });
+                const math::Ray& ray =
+                    this->m_rays_matrix[
+                        (y * this->m_image_width + x) * Config::RAY_PER_PIXEL + ray_index
+                    ];
 
-                auto final_color = math::Vec3(1.f, 1.f, 1.f);
+                float t =
+                    static_cast<float>(y) /
+                    this->m_image_height;
 
-                while (!rays_to_follow.empty()) {
-                    auto [curr_ray, iteration] = rays_to_follow.top();
-                    rays_to_follow.pop();
+                for (auto curr_iteration : std::views::iota(0U, Config::RENDER_ITERATION)) {
+                    // Stack of rays, together with the iteration number
+                    std::stack<std::pair<math::Ray, size_t>> rays_to_follow{};
+                    rays_to_follow.push({ ray, 0 });
 
-                    std::optional<geometry::HitRecord> hit{};
-                    hit = world->Hit(curr_ray);
+                    auto final_color = math::Vec3(1.f, 1.f, 1.f);
 
-                    if (hit) {
-                        hit->m_point = math::Ray(hit->m_point, hit->m_normal).At(geometry::Hittable::TMIN * 1.1f);
-                        auto scattered = hit->m_material->Scatter(curr_ray, hit.value());
+                    while (!rays_to_follow.empty()) {
+                        auto [curr_ray, iteration] = rays_to_follow.top();
+                        rays_to_follow.pop();
 
-                        if (!scattered.has_value()) {
-                            final_color = math::Vec3(); // Total absorbtion
-                            break;
+                        std::optional<geometry::HitRecord> hit{};
+                        hit = world->Hit(curr_ray);
+
+                        if (hit) {
+                            hit->m_point = math::Ray(hit->m_point, hit->m_normal).At(geometry::Hittable::TMIN * 1.1f);
+                            auto scattered = hit->m_material->Scatter(curr_ray, hit.value());
+
+                            if (!scattered.has_value()) {
+                                final_color = math::Vec3(); // Total absorbtion
+                                break;
+                            }
+
+                            auto [direction, albedo] = scattered.value();
+
+                            final_color = final_color * albedo;
+
+                            if (Config::MAX_DEPTH == iteration + 1) {
+                                continue;
+                            }
+
+                            rays_to_follow.push({ direction, iteration + 1 });
                         }
-
-                        auto [direction, albedo] = scattered.value();
-
-                        final_color = final_color * albedo;
-
-                        if (Config::MAX_DEPTH == iteration + 1) {
-                            continue;
-                        }
-
-                        rays_to_follow.push({ direction, iteration + 1});
                     }
+
+                    // if(0 == num_accum) {
+                    final_color = final_color * math::Vec3(0.f, ((1.0f - t) * 180 + t * 80) / 255.f, 1.f);
+                    // }
+
+
+                    // Clamp to [0,1]
+                    final_color.x = std::clamp(final_color.x, 0.0f, 1.0f);
+                    final_color.y = std::clamp(final_color.y, 0.0f, 1.0f);
+                    final_color.z = std::clamp(final_color.z, 0.0f, 1.0f);
+
+                    // RGB output
+                    r += static_cast<uint8_t>(final_color.x * 255.0f);
+                    g += static_cast<uint8_t>(final_color.y * 255.0f);
+                    b += static_cast<uint8_t>(final_color.z * 255.0f);
                 }
 
-                // if(0 == num_accum) {
-                final_color = final_color * math::Vec3(0.f, ((1.0f - t) * 180 + t * 80) / 255.f, 1.f);
-                // }
-
-
-                // Clamp to [0,1]
-                final_color.x = std::clamp(final_color.x, 0.0f, 1.0f);
-                final_color.y = std::clamp(final_color.y, 0.0f, 1.0f);
-                final_color.z = std::clamp(final_color.z, 0.0f, 1.0f);
-
-                // RGB output
-                r += static_cast<uint8_t>(final_color.x * 255.0f);
-                g += static_cast<uint8_t>(final_color.y * 255.0f);
-                b += static_cast<uint8_t>(final_color.z * 255.0f);
+                
             }
+
+            r /= Config::RAY_PER_PIXEL;
+            g /= Config::RAY_PER_PIXEL;
+            b /= Config::RAY_PER_PIXEL;
 
             this->m_img_buf[base_idx + 0] = r / Config::RENDER_ITERATION;
             this->m_img_buf[base_idx + 1] = g / Config::RENDER_ITERATION;
