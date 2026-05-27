@@ -183,7 +183,7 @@ Mesh::LoadFromObj(std::filesystem::path _obj_path, float _scale) {
                 std::filesystem::path material_file_path =
                     _obj_path.parent_path() / pattern;
 
-                ReadMaterialFromMtl(material_file_path);
+                ReadMaterialFromMtl(material_file_path.string());
                 break;
             }
             case 7: {
