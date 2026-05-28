@@ -12,90 +12,58 @@ using Material = cg_raytracing::geometry::StandardMaterial;
 using HitRecord = cg_raytracing::geometry::HitRecord;
 
 TEST_CASE("Material Scatter Tests") {
-
-    SECTION("Scatter returns correct number of rays") {
-
+    SECTION("Scatter returns a ray") {
         auto material = Material::Diffuse({0.5f, 0.5f, 0.5f});
-
         HitRecord hit{};
         hit.m_point  = Vec3(0.f, 0.f, 0.f);
         hit.m_normal = Vec3(0.f, 1.f, 0.f);
+        Ray incoming(Vec3(0.f, 10.f, 0.f), Vec3(0.f, -1.f, 0.f));
 
-        Ray incoming(
-            Vec3(0.f, 10.f, 0.f),
-            Vec3(0.f, -1.f, 0.f)
-        );
+        auto result = material.Scatter(incoming, hit);
 
-        constexpr int NUM_SAMPLES = 16;
-
-        auto scattered = material.Scatter(
-            incoming,
-            hit,
-            NUM_SAMPLES
-        );
-
-        REQUIRE(scattered.size() == NUM_SAMPLES);
+        REQUIRE(result.has_value());
     }
 
-    SECTION("Scattered rays stay in correct hemisphere") {
-
+    SECTION("Scattered ray stays in correct hemisphere") {
         auto material = Material::Diffuse({0.5f, 0.5f, 0.5f});
-
         HitRecord hit{};
         hit.m_point  = Vec3(0.f, 0.f, 0.f);
         hit.m_normal = Vec3(0.f, 1.f, 0.f);
+        Ray incoming(Vec3(0.f, 10.f, 0.f), Vec3(0.f, -1.f, 0.f));
 
-        Ray incoming(
-            Vec3(0.f, 10.f, 0.f),
-            Vec3(0.f, -1.f, 0.f)
-        );
+        auto result = material.Scatter(incoming, hit);
+        REQUIRE(result.has_value());
 
-        auto scattered = material.Scatter(
-            incoming,
-            hit,
-            128
-        );
-
-        for (const auto& ray : scattered) {
-
-            float dot = ray.m_direction.dot(hit.m_normal);
-
-            REQUIRE(dot >= 0.0f);
-        }
+        float dot = result->first.m_direction.dot(hit.m_normal);
+        REQUIRE(dot >= 0.0f);
     }
 
-    SECTION("Scatter produces different directions") {
-
+    SECTION("Scattered ray is normalized") {
         auto material = Material::Diffuse({0.5f, 0.5f, 0.5f});
-
         HitRecord hit{};
         hit.m_point  = Vec3(0.f, 0.f, 0.f);
         hit.m_normal = Vec3(0.f, 1.f, 0.f);
+        Ray incoming(Vec3(0.f, 10.f, 0.f), Vec3(0.f, -1.f, 0.f));
 
-        Ray incoming(
-            Vec3(0.f, 10.f, 0.f),
-            Vec3(0.f, -1.f, 0.f)
-        );
+        auto result = material.Scatter(incoming, hit);
+        REQUIRE(result.has_value());
 
-        auto scattered = material.Scatter(
-            incoming,
-            hit,
-            16
-        );
+        float len = result->first.m_direction.length();
+        REQUIRE(len == Catch::Approx(1.0f).margin(0.001f));
+    }
 
-        bool found_different = false;
+    SECTION("Scattered ray originates from hit point") {
+        auto material = Material::Diffuse({0.5f, 0.5f, 0.5f});
+        HitRecord hit{};
+        hit.m_point  = Vec3(1.f, 2.f, 3.f);
+        hit.m_normal = Vec3(0.f, 1.f, 0.f);
+        Ray incoming(Vec3(0.f, 10.f, 0.f), Vec3(0.f, -1.f, 0.f));
 
-        for (size_t i = 1; i < scattered.size(); i++) {
+        auto result = material.Scatter(incoming, hit);
+        REQUIRE(result.has_value());
 
-            const auto& a = scattered[i - 1].m_direction;
-            const auto& b = scattered[i].m_direction;
-
-            if ((a - b).length() > 0.0001f) {
-                found_different = true;
-                break;
-            }
-        }
-
-        REQUIRE(found_different);
+        REQUIRE(result->first.m_origin.x == Catch::Approx(hit.m_point.x));
+        REQUIRE(result->first.m_origin.y == Catch::Approx(hit.m_point.y));
+        REQUIRE(result->first.m_origin.z == Catch::Approx(hit.m_point.z));
     }
 }

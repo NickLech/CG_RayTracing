@@ -1,6 +1,6 @@
 #pragma once
 
-#include "point_light.hpp"
+//#include "point_light.hpp"
 #include "TextureFormats.hpp"
 #include "config.hpp"
 #include "ray.hpp"
@@ -45,7 +45,9 @@ class Camera {
     struct RenderParam {
         size_t pos_x, pos_y;
         size_t size_x, size_y;
-        PointLight* light;
+        // Light is now part of the scene as an EmissiveMaterial object,
+        // no external PointLight needed
+        //PointLight* light;
         World const* world;
     };
 
@@ -101,8 +103,7 @@ class Camera {
     void RenderThreadRender(RenderThreadData& _data);
     void RenderThreadRenderBlock(RenderThreadData const& _data, RenderParam _param);
 
-    void BurstRays(PointLight& _light, 
-        World const& _world);
+    void BurstRays(World const& _world);
 
     void Rotate(const math::Vec3 &_rotation_angles);
     void Translate(const math::Vec3 &_translation_vector);

@@ -14,13 +14,12 @@
 #include <config.hpp>
 #include <GLContext.hpp>
 #include <IndexBuffer.hpp>
-#include <point_light.hpp>
+//#include <point_light.hpp>
 #include <Shader.hpp>
 #include <Texture2D.hpp>
 #include <VertexBuffer.hpp>
-
-#include <point_light.hpp>
 #include <world.hpp>
+#include <material.hpp>
 
 #include <GL/glew.h>
 #include <SDL3/SDL.h>
@@ -67,7 +66,6 @@ struct Vertex2D {
 // this in another file and optimize it
 void HandleKeyDown(SDL_Event &_ev,
                    std::unique_ptr<cg_raytracing::scene::Camera> &_my_camera,
-                   cg_raytracing::scene::PointLight &_light,
                    cg_raytracing::Texture2D &_tex,
                    cg_raytracing::scene::World const& _world,
                    std::vector<std::shared_ptr<cg_raytracing::geometry::Hittable>> const& _hittables) {
@@ -90,7 +88,7 @@ void HandleKeyDown(SDL_Event &_ev,
         _my_camera->Rotate(cg_raytracing::math::Vec3(0.0, 0.02, 0.0));
         must_update = true;
         break;
-    case SDL_SCANCODE_J:
+    /*case SDL_SCANCODE_J:
         _light.m_position.z -= 50.0f;
         must_update = true;
         break;
@@ -106,6 +104,7 @@ void HandleKeyDown(SDL_Event &_ev,
         _light.m_position.x -= 50.0f;
         must_update = true;
         break;
+    */
     case SDL_SCANCODE_C: {
         static int s_current_preset = 0;
         s_current_preset = (s_current_preset + 1) % 3;
@@ -130,7 +129,7 @@ void HandleKeyDown(SDL_Event &_ev,
     }
 
     if (must_update) {
-        _my_camera->BurstRays(_light, _world);
+        _my_camera->BurstRays(_world);
         _tex.CopyFromBuffer(std::bit_cast<uint8_t const*>(_my_camera->m_img_buf.data()), 0, 0, 0,
             _tex.GetWidth(), _tex.GetHeight(),
             cg_raytracing::PixelFormat::RGB,
@@ -283,11 +282,12 @@ int main() {
     //                    tex.GetHeight(), cg_raytracing::PixelFormat::RGB,
     //                    cg_raytracing::PixelDataType::UNSIGNED_BYTE);
 
+    /*
     cg_raytracing::scene::PointLight light(
         cg_raytracing::math::Vec3(0.0f, 0.0f, 150.0f),
         cg_raytracing::math::Vec3(1.0f, 1.0f, 1.0f),
         1.5f
-    );
+    );*/
 
     using Hittable = cg_raytracing::geometry::Hittable;
     using World = cg_raytracing::scene::World;
@@ -316,6 +316,15 @@ int main() {
 
     auto world = World::CreateEmpty(1000.f);
 
+    using EmissiveMaterial = cg_raytracing::geometry::EmissiveMaterial;
+
+    // Emissive sphere acting as a light source in the scene
+    auto mat_light = std::make_shared<EmissiveMaterial>(
+        EmissiveMaterial::Create({1.0f, 1.0f, 0.9f}, 5.0f)
+    );
+    world.AddObject(std::make_shared<Sphere>(cg_raytracing::math::Vec3(0.0f, -80.0f, 150.0f), 15.f, mat_light));
+
+
     std::shared_ptr<Mesh> train = std::make_shared<Mesh>(Vec3(0.0f, 0.0f, 200.0f));
     // TODO: handle exception
     auto loader_status = train->LoadFromObj("./assets/meshes/Lampada.obj", 10.0);
@@ -330,7 +339,7 @@ int main() {
 
     auto begin = std::chrono::system_clock::now();
 
-    my_camera->BurstRays(light, world);
+    my_camera->BurstRays(world);
 
     auto end = std::chrono::system_clock::now();
     auto diff = std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count();
@@ -348,7 +357,7 @@ int main() {
         while (SDL_PollEvent(&ev)) {
             switch (ev.type) {
             case SDL_EVENT_KEY_DOWN:
-                HandleKeyDown(ev, my_camera, light, tex, world, hittables);
+                HandleKeyDown(ev, my_camera, tex, world, hittables);
                 break;
             case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
                 close = true;

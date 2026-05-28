@@ -5,7 +5,7 @@
 #include "sphere.hpp"
 #include "triangle.hpp"
 #include "vec3.hpp"
-#include "point_light.hpp"
+//#include "point_light.hpp"
 #include "random_prob.hpp"
 
 #include <algorithm>
@@ -93,7 +93,7 @@ void Camera::RenderThreadRender(RenderThreadData& _data) {
 
 void Camera::RenderThreadRenderBlock(RenderThreadData const& _data, RenderParam _param) {
     auto world = _param.world;
-    auto light = _param.light;
+    //auto light = _param.light;
 
     auto start_x = _param.pos_x;
     auto start_y = _param.pos_y;
@@ -141,7 +141,18 @@ void Camera::RenderThreadRenderBlock(RenderThreadData const& _data, RenderParam 
                             auto scattered = hit->m_material->Scatter(curr_ray, hit.value());
 
                             if (!scattered.has_value()) {
-                                final_color = math::Vec3(); // Total absorbtion
+                                // Check if the surface is emissive — if so, accumulate its emission.
+                                // Otherwise treat as total absorption (e.g. a black hole material).
+                                if (hit->m_material->IsEmissive()) {
+                                    // Shade with no external light — emissive materials
+                                    // return their own emission color from Shade()
+                                    auto emission = hit->m_material->Shade(
+                                        hit.value(), {}, {}, 0.0f, curr_ray
+                                    );
+                                    final_color = final_color * emission;
+                                } else {
+                                    final_color = math::Vec3(); // Total absorption
+                                }
                                 break;
                             }
 
@@ -202,7 +213,7 @@ void Camera::Translate(const math::Vec3 &_translation_vector) {
     }
 }
 
-void Camera::BurstRays(PointLight& _light, World const& _world) {
+void Camera::BurstRays(/*PointLight& _light,*/ World const& _world) {
     const auto NUM_ROWS_PER_THREAD = m_image_height / m_threads.size();
     const auto NUM_COLS_PER_THREAD = m_image_width / m_threads.size();
 
@@ -218,7 +229,7 @@ void Camera::BurstRays(PointLight& _light, World const& _world) {
         auto size_y = end_y - start_y;
 
         auto param = RenderParam{};
-        param.light = &_light;
+        //param.light = &_light;
         param.world = &_world;
         param.pos_x = start_x;
         param.size_x = size_x;

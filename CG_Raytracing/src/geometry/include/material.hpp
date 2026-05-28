@@ -13,6 +13,11 @@ namespace cg_raytracing::geometry {
 namespace scene_fwd { struct PointLight; }
 
 struct Material {
+
+    // Returns true if this material emits light rather than scattering it.
+    // Used by the path tracer to accumulate emission instead of absorbing.
+    virtual bool IsEmissive() const { return false; }
+
     virtual math::Vec3 Shade(const HitRecord&  _hit,
                               const math::Vec3& _light_pos,
                               const math::Vec3& _light_color,
@@ -65,6 +70,36 @@ struct StandardMaterial : public Material {
         m.m_ks    = _ks;
         m.m_ns    = _ns;
         m.m_illum = 2;
+        return m;
+    }
+};
+
+struct EmissiveMaterial : public Material {
+    math::Vec3 m_emission;      // color and intensity of the emitted light
+    float      m_intensity = 1.0f;
+
+    bool IsEmissive() const override { return true; }
+    
+    math::Vec3 Shade(const HitRecord&  _hit,
+                     const math::Vec3& _light_pos,
+                     const math::Vec3& _light_color,
+                     float             _light_intensity,
+                     const math::Ray&  _ray) const override {
+        // an emissive material simply returns its emission color multiplied by its intensity
+        return m_emission * m_intensity;
+    }
+
+    std::optional<std::pair<math::Ray, math::Vec3>> Scatter(
+        const math::Ray& _ray_in,
+        const HitRecord& _hit) const override {
+        // an emissive material does not scatter rays
+        return std::nullopt;
+    }
+
+    static EmissiveMaterial Create(math::Vec3 _color, float _intensity = 1.0f) {
+        EmissiveMaterial m{};
+        m.m_emission  = _color;
+        m.m_intensity = _intensity;
         return m;
     }
 };
