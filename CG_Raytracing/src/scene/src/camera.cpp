@@ -124,24 +124,42 @@ void Camera::RenderThreadRenderBlock(RenderThreadData const& _data, RenderParam 
 
                 for (auto curr_iteration : std::views::iota(0U, Config::RENDER_ITERATION)) {
                     // Stack of rays, together with the iteration number
-                    std::stack<std::pair<math::Ray, size_t>> rays_to_follow{};
-                    rays_to_follow.push({ ray, 0 });
+                    // std::stack<std::pair<math::Ray, size_t>> rays_to_follow{};
+                    // rays_to_follow.push({ ray, 0 });
+
+                    // Do not use stack,
+                    // we follow only one ray and its reflections/refractions
+                    // per iteration
+                    auto next_ray = ray;
+                    auto curr_iteration = 0U;
 
                     auto final_color = math::Vec3(1.f, 1.f, 1.f);
 
-                    while (!rays_to_follow.empty()) {
-                        auto [curr_ray, iteration] = rays_to_follow.top();
-                        rays_to_follow.pop();
+                    while (true) {
+                        auto curr_ray = next_ray;
 
                         std::optional<geometry::HitRecord> hit{};
-                        hit = world->Hit(curr_ray);
+                        //hit = world->Hit(curr_ray);
+                        hit = world->HitNoAllocations(curr_ray);
 
                         if (hit) {
                             hit->m_point = math::Ray(hit->m_point, hit->m_normal).At(geometry::Hittable::TMIN * 1.1f);
                             auto scattered = hit->m_material->Scatter(curr_ray, hit.value());
 
                             if (!scattered.has_value()) {
-                                final_color = math::Vec3(); // Total absorbtion
+                                // Check if the surface is emissive — if so, accumulate its emission.
+                                // Otherwise treat as total absorption (e.g. a black hole material).
+                                if (hit->m_material->IsEmissive()) {
+                                    // Shade with no external light — emissive materials
+                                    // return their own emission color from Shade()
+                                    auto emission = hit->m_material->Shade(
+                                        hit.value(), {}, {}, 0.0f, curr_ray
+                                    );
+                                    final_color = final_color * emission;
+                                }
+                                else {
+                                    final_color = math::Vec3(); // Total absorption
+                                }
                                 break;
                             }
 
@@ -149,11 +167,15 @@ void Camera::RenderThreadRenderBlock(RenderThreadData const& _data, RenderParam 
 
                             final_color = final_color * albedo;
 
-                            if (Config::MAX_DEPTH == iteration + 1) {
-                                continue;
+                            if (Config::MAX_DEPTH == curr_iteration + 1) {
+                                break;
                             }
 
-                            rays_to_follow.push({ direction, iteration + 1 });
+                            ++curr_iteration;
+                            next_ray = direction;
+                        }
+                        else {
+                            break;
                         }
                     }
 

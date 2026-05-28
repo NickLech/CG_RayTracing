@@ -3,7 +3,7 @@
 #include <cstdint>
 namespace Config {
 inline constexpr float ASPECT_RATIO = 4.0 / 3.0;
-inline constexpr uint32_t IMAGE_WIDTH = 320;
+inline constexpr uint32_t IMAGE_WIDTH = 160;
 inline constexpr uint32_t IMAGE_HEIGHT =
     static_cast<uint32_t>(IMAGE_WIDTH / ASPECT_RATIO);
 
@@ -32,5 +32,5 @@ inline const float CAMERA_PRESETS[][2][3] = {
     }
 };
 
-inline constexpr uint32_t MAX_DEPTH = 50;
+inline constexpr uint32_t MAX_DEPTH = 30;
 } // namespace Config

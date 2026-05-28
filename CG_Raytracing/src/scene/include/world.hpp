@@ -42,6 +42,18 @@ namespace cg_raytracing::scene {
 			float _t_max = TMAX) const override;
 
 		/// <summary>
+		/// Search for ray-object intersections WITHOUT
+		/// allocations of any kind
+		/// </summary>
+		/// <param name="_ray"></param>
+		/// <param name="_t_min"></param>
+		/// <param name="_t_max"></param>
+		/// <returns></returns>
+		std::optional<geometry::HitRecord> HitNoAllocations(const math::Ray& _ray,
+			float _t_min = TMIN,
+			float _t_max = TMAX) const;
+
+		/// <summary>
 		/// Add single object to the hierarchy. Remember to call 
 		/// UpdateTree before using any other method
 		/// </summary>
