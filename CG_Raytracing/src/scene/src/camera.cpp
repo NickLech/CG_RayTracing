@@ -118,9 +118,9 @@ void Camera::RenderThreadRenderBlock(RenderThreadData const& _data, RenderParam 
                         (y * this->m_image_width + x) * Config::RAY_PER_PIXEL + ray_index
                     ];
 
-                float t =
-                    static_cast<float>(y) /
-                    this->m_image_height;
+                float t = .8f;
+                    // static_cast<float>(y) /
+                    // this->m_image_height;
 
                 for (auto curr_iteration : std::views::iota(0U, Config::RENDER_ITERATION)) {
                     // Stack of rays, together with the iteration number
@@ -134,6 +134,7 @@ void Camera::RenderThreadRenderBlock(RenderThreadData const& _data, RenderParam 
                     auto curr_iteration = 0U;
 
                     auto final_color = math::Vec3(1.f, 1.f, 1.f);
+                    auto bg_color = math::Vec3(.3f, .5f, 1.f);
 
                     while (true) {
                         auto curr_ray = next_ray;
@@ -143,7 +144,7 @@ void Camera::RenderThreadRenderBlock(RenderThreadData const& _data, RenderParam 
                         hit = world->HitNoAllocations(curr_ray);
 
                         if (hit) {
-                            hit->m_point = math::Ray(hit->m_point, hit->m_normal).At(geometry::Hittable::TMIN * 1.1f);
+                            hit->m_point = math::Ray(hit->m_point, hit->m_normal).At(geometry::Hittable::TMIN * 1.01f);
                             auto scattered = hit->m_material->Scatter(curr_ray, hit.value());
 
                             if (!scattered.has_value()) {
@@ -175,13 +176,12 @@ void Camera::RenderThreadRenderBlock(RenderThreadData const& _data, RenderParam 
                             next_ray = direction;
                         }
                         else {
+                            final_color = final_color * bg_color;
                             break;
                         }
                     }
-
-                    // if(0 == num_accum) {
-                    final_color = final_color * math::Vec3(0.f, ((1.0f - t) * 180 + t * 80) / 255.f, 1.f);
-                    // }
+                    
+                    //final_color = final_color * math::Vec3(1.f, ((1.0f - t) * 180 + t * 80) / 255.f, 1.f);
 
 
                     // Clamp to [0,1]
