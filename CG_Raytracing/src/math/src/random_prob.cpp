@@ -50,7 +50,7 @@ namespace cg_raytracing::math {
 		math::Vec3 random_dir;
 		// Rejection sampling: discard points outside the unit sphere
 		do {
-			random_dir = math::Vec3(GetRandomFloat(), GetRandomFloat(), GetRandomFloat());
+			random_dir = GetRandomVec3(-1.f, 1.f);
 		} while (random_dir.length_squared() > 1.0f || random_dir.length_squared() < 1e-16);
 
 		// Flip to correct hemisphere if pointing away from the surface (under the surface)
