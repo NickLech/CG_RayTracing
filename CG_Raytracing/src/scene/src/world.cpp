@@ -63,6 +63,20 @@ namespace cg_raytracing::scene {
 		return std::nullopt;
 	}
 
+	std::optional<geometry::HitRecord> World::HitNoAllocations(const math::Ray& _ray, float _t_min, float _t_max) const {
+		if (0 == m_objects.size()) {
+			return std::nullopt;
+		}
+		if (!m_kd_tree) {
+			return std::nullopt;
+		}
+		auto hit = m_kd_tree->RayIntersectsSingleObject(_ray, m_objects, _t_min, _t_max);
+		if (!hit.has_value()) {
+			return std::nullopt;
+		}
+		return hit->first;
+	}
+
 	std::optional<WorldError> World::AddObject(std::shared_ptr<geometry::Hittable> _obj) {
 		auto bbox = _obj->GetBoundingBox();
 		auto half_size = m_world_size / 2.f;

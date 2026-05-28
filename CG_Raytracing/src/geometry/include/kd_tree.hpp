@@ -95,6 +95,19 @@ namespace cg_raytracing::geometry {
 			size_t _count = std::numeric_limits<size_t>::max()) const;
 
 		/// <summary>
+		/// Check if a ray intersect one object, e.g. a COMPLETE
+		/// intersection, not only bbox
+		/// </summary>
+		/// <param name="_ray"></param>
+		/// <returns></returns>
+		std::optional<std::pair<HitRecord, size_t>> RayIntersectsSingleObject(
+			math::Ray const& _ray,
+			std::vector<std::shared_ptr<Hittable>> const& _hittables, 
+			float _tmin,
+			float _tmax
+		) const;
+
+		/// <summary>
 		/// Get total number of tracked objects in the BVH
 		/// </summary>
 		/// <returns>Number of objects</returns>
@@ -141,6 +154,14 @@ namespace cg_raytracing::geometry {
 		std::vector<std::pair<FlatKDNode const*, math::Vec3>> SearchIntersections(
 			SearchParams const& _params,
 			size_t _count = std::numeric_limits<size_t>::max()
+		) const;
+
+		std::optional<std::pair<HitRecord, size_t>> RayIntersectsSingleObject(
+			math::Ray const& _ray,
+			std::vector<std::shared_ptr<Hittable>> const& _hittables,
+			FlatKDNode const& _curr_node,
+			float _tmin,
+			float _tmax
 		) const;
 
 	private :
