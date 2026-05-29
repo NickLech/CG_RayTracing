@@ -305,10 +305,10 @@ int main() {
     // hittables = ObjLoader::Load("model.obj", &mat);
 
     auto mat_sphere = std::make_shared<StandardMaterial>(
-    StandardMaterial::Diffuse({0.7f, 0.2f, 0.2f}, {.4f, .4f, .4f})
+    StandardMaterial::Diffuse({.4f, .4f, .8f}, {.5f, .5f, .5f})
     );
     auto mat_cube = std::make_shared<StandardMaterial>(
-        StandardMaterial::Diffuse({0.2f, 0.2f, 0.8f}, {.5f, .5f, .5f })
+        StandardMaterial::Diffuse({.4f, .4f, .8f}, {.5f, .5f, .5f })
     );
     auto mat_train = std::make_shared<StandardMaterial>(
         StandardMaterial::Diffuse({0.7f, 0.2f, 0.2f})
@@ -319,10 +319,14 @@ int main() {
     using EmissiveMaterial = cg_raytracing::geometry::EmissiveMaterial;
 
     // Emissive sphere acting as a light source in the scene
-    auto mat_light = std::make_shared<EmissiveMaterial>(
-        EmissiveMaterial::Create({1.0f, 1.0f, 0.9f}, 5.0f)
+    auto mat_light1 = std::make_shared<EmissiveMaterial>(
+        EmissiveMaterial::Create({1.0f, 1.0f, 0.0f}, 5.0f)
     );
-    world.AddObject(std::make_shared<Sphere>(cg_raytracing::math::Vec3(0.0f, -80.0f, 150.0f), 15.f, mat_light));
+    auto mat_light2 = std::make_shared<EmissiveMaterial>(
+        EmissiveMaterial::Create({ 0.0f, 1.0f, 0.0f }, 10.0f)
+    );
+    world.AddObject(std::make_shared<Sphere>(cg_raytracing::math::Vec3(0.0f, -45.0f, 180.0f), 15.f, mat_light1));
+    world.AddObject(std::make_shared<Sphere>(cg_raytracing::math::Vec3(-40.f, 10.0f, 170.0f), 15.f, mat_light2));
 
 
     std::shared_ptr<Mesh> train = std::make_shared<Mesh>(Vec3(0.0f, 0.0f, 200.0f));

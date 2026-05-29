@@ -683,6 +683,58 @@ namespace cg_raytracing::geometry {
 		return (curr_depth >= max_depth) ? std::optional{ KDTreeMessage::UNBALANCED } : std::nullopt;
 	}
 
+	std::optional<std::pair<HitRecord, size_t>> KDTree::RayIntersectsSingleObject(
+		math::Ray const& _ray,
+		std::vector<std::shared_ptr<Hittable>> const& _hittables,
+		float _tmin,
+		float _tmax
+	) const {
+		return RayIntersectsSingleObject(_ray, _hittables, m_flat_tree[0], _tmin, _tmax);
+	}
+
+	std::optional<std::pair<HitRecord, size_t>> KDTree::RayIntersectsSingleObject(
+		math::Ray const& _ray, 
+		std::vector<std::shared_ptr<Hittable>> const& _hittables,
+		FlatKDNode const& _curr_node,
+		float _tmin,
+		float _tmax) const {
+		// Check if top level bbox is intersected
+		if (!_curr_node.bbox.RayIntersect(_ray, _tmin, _tmax)) {
+			return std::nullopt;
+		}
+
+		if (_curr_node.obj_index.has_value()) { // Node is leaf
+			// Check if we hit
+			auto hit = _hittables[_curr_node.obj_index.value()]->Hit(_ray, _tmin, _tmax);
+			if (!hit.has_value()) {
+				return std::nullopt;
+			}
+			return { {hit.value(), _curr_node.obj_index.value()} };
+		}
+
+		auto left = _curr_node.left;
+		auto right = _curr_node.right;
+
+		// Check if we hit left
+		auto node_left = RayIntersectsSingleObject(_ray, _hittables, m_flat_tree[left.value()], _tmin, _tmax);
+
+		if (node_left.has_value()) { // If we hit something, it is closer to the origin
+			_tmax = node_left->first.m_t; // Update tmax
+		}
+
+		// Check right with possibly new tmin
+		auto node_right = RayIntersectsSingleObject(_ray, _hittables, m_flat_tree[right.value()], _tmin, _tmax);
+
+		if (node_right.has_value()) {
+			return node_right; // We hit something, it is closer to the origin
+		}
+		else if (node_left.has_value()) {
+			return node_left; // Else left was closer
+		}
+
+		return std::nullopt;
+	}
+
 	KDTree::KDTree() :
 		m_flat_tree{},
 		m_world_size{},
