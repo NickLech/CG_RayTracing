@@ -48,6 +48,8 @@ namespace cg_raytracing::geometry {
         rec.m_point    = _ray.At(t);
         rec.m_material = m_material;
         rec.SetFaceNormal(_ray, outward_normal);
+        rec.m_u        = u;
+        rec.m_v        = v;
     
         return rec;
     }

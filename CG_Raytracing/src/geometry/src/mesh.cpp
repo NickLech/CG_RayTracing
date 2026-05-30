@@ -31,6 +31,17 @@ std::optional<HitRecord> Mesh::Hit(const cg_raytracing::math::Ray &_ray,
         auto hit_result =
             current_triangle.Hit(_ray, _t_min, closest_hit_distance);
         if (hit_result) {
+            float b_u = hit_result->m_u; 
+            float b_v = hit_result->m_v;
+            float b_w = 1.0f - b_u - b_v;
+
+            auto uv0 = m_face_uv[triangle[0][1] - 1];
+            auto uv1 = m_face_uv[triangle[1][1] - 1];
+            auto uv2 = m_face_uv[triangle[2][1] - 1];
+
+            hit_result->m_tex_u = b_w * uv0[0] + b_u * uv1[0] + b_v * uv2[0];
+            hit_result->m_tex_v = b_w * uv0[1] + b_u * uv1[1] + b_v * uv2[1];
+
             closest_hit = hit_result;
             closest_hit_distance = hit_result->m_t;
         }
@@ -95,6 +106,8 @@ Mesh::LoadFromObj(std::filesystem::path _obj_path, float _scale) {
         // 3 -> (vt) uv coordinates
         // 4 -> (s) smooth shading
         // 5 -> (f) faces v/vt/vn
+        // 6 -> (mtllib) material library
+        // 7 -> (usemtl) use material
         uint8_t state = 0;
         uint8_t info_index = 0;
 
@@ -192,6 +205,7 @@ Mesh::LoadFromObj(std::filesystem::path _obj_path, float _scale) {
                     this->m_material_map.end()) {
                     current_material = this->m_material_map[pattern];
                 }
+                break;
             }
             }
         }
@@ -254,6 +268,19 @@ void Mesh::ReadMaterialFromMtl(std::string _mtl_path) {
             if (!this->m_material.empty()) {
                 auto &ks = this->m_material.back()->m_ks;
                 ss >> ks.x >> ks.y >> ks.z;
+            }
+        } else if (command == "map_Kd") {
+            std::string texture_path_str;
+            if (ss >> texture_path_str && !this->m_material.empty()) {
+                // Resolve the path relative to the MTL file location
+                std::filesystem::path mtl_dir =
+                    std::filesystem::path(_mtl_path).parent_path();
+                std::string full_texture_path =
+                    (mtl_dir / texture_path_str).string();
+
+                // Assign the texture to the current material
+                this->m_material.back()->m_diffuse_map =
+                    std::make_shared<Texture>(full_texture_path);
             }
         }
     }

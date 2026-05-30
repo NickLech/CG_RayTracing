@@ -1,4 +1,6 @@
-#import "texture.hpp"
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+#include "texture.hpp"
 
 namespace cg_raytracing::geometry {
 Texture::Texture(const std::filesystem::path _path) {

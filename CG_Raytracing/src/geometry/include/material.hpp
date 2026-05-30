@@ -4,6 +4,7 @@
 #include <memory>
 #include <optional>
 
+#include "texture.hpp"
 #include "vec3.hpp"
 #include "ray.hpp"
 #include "hit_record.hpp"
@@ -40,6 +41,8 @@ struct StandardMaterial : public Material {
     float       m_ni    = 1.0f;
     float       m_d     = 1.0f;
     int         m_illum = 1;
+
+    std::shared_ptr<cg_raytracing::geometry::Texture> m_diffuse_map = nullptr;
 
     math::Vec3 Shade(const HitRecord&  _hit,
                      const math::Vec3& _light_pos,

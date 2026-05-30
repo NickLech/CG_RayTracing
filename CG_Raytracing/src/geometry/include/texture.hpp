@@ -1,6 +1,5 @@
 #pragma once
 
-#include "stb_image.h"
 #include "vec3.hpp"
 #include <filesystem>
 

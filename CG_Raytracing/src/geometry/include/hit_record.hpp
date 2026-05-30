@@ -15,6 +15,12 @@ struct HitRecord {
     float                     m_t;
     bool                      m_front_face;
 
+    float m_u; 
+    float m_v;
+
+    float m_tex_u;
+    float m_tex_v;
+
     void SetFaceNormal(const cg_raytracing::math::Ray&  _ray,
                        const cg_raytracing::math::Vec3& _outward_normal);
 };

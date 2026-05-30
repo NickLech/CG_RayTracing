@@ -326,7 +326,7 @@ int main() {
         EmissiveMaterial::Create({ 0.0f, 1.0f, 0.0f }, 10.0f)
     );
     world.AddObject(std::make_shared<Sphere>(cg_raytracing::math::Vec3(0.0f, -45.0f, 180.0f), 15.f, mat_light1));
-    world.AddObject(std::make_shared<Sphere>(cg_raytracing::math::Vec3(-40.f, 10.0f, 170.0f), 15.f, mat_light2));
+    // world.AddObject(std::make_shared<Sphere>(cg_raytracing::math::Vec3(-40.f, 10.0f, 170.0f), 15.f, mat_light2));
 
 
     std::shared_ptr<Mesh> train = std::make_shared<Mesh>(Vec3(0.0f, 0.0f, 200.0f));
@@ -334,10 +334,10 @@ int main() {
     auto loader_status = train->LoadFromObj("./assets/meshes/Lampada.obj", 10.0);
     train->Rotate(Vec3(0.5f, 0.0f, 0.0f));
 
-    world.AddObject(std::make_shared<Sphere>(Vec3(0.0f, 0.0f, 200.0f), 30.f, mat_sphere));
-    world.AddObject(std::make_shared<Cube>(Vec3(0.0f, 85.0f, 200.0f), 50.f, mat_cube));
+    // world.AddObject(std::make_shared<Sphere>(Vec3(0.0f, 0.0f, 200.0f), 30.f, mat_sphere));
+    // world.AddObject(std::make_shared<Cube>(Vec3(0.0f, 85.0f, 200.0f), 50.f, mat_cube));
     // world.AddObject(std::make_shared<Sphere>(Vec3(0.0f, 0.0f, 250.0f), 20.f, mat_cube));
-    // world.AddObject(train);
+    world.AddObject(train);
 
     world.UpdateTree();
 
