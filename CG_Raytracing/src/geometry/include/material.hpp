@@ -74,6 +74,32 @@ struct StandardMaterial : public Material {
     }
 };
 
+struct DielectricMaterial : public Material {
+    // Index of refraction (air=1.0, glass≈1.5, water≈1.33, diamond≈2.4)
+    float m_ior = 1.5f;
+
+    bool IsEmissive() const override { return false; }
+
+    math::Vec3 Shade(const HitRecord&  _hit,
+                     const math::Vec3& _light_pos,
+                     const math::Vec3& _light_color,
+                     float             _light_intensity,
+                     const math::Ray&  _ray) const override {
+        // Dielectrics pass light through — no direct shading contribution
+        return {1.0f, 1.0f, 1.0f};
+    }
+
+    std::optional<std::pair<math::Ray, math::Vec3>> Scatter(
+        const math::Ray& _ray_in,
+        const HitRecord& _hit) const override;
+
+    static DielectricMaterial Create(float _ior = 1.5f) {
+        DielectricMaterial m{};
+        m.m_ior = _ior;
+        return m;
+    }
+};
+
 struct EmissiveMaterial : public Material {
     math::Vec3 m_emission;      // color and intensity of the emitted light
     float      m_intensity = 1.0f;

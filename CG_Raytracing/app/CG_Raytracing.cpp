@@ -325,6 +325,20 @@ int main() {
     auto mat_light2 = std::make_shared<EmissiveMaterial>(
         EmissiveMaterial::Create({ 0.0f, 1.0f, 0.0f }, 10.0f)
     );
+
+    using DielectricMaterial = cg_raytracing::geometry::DielectricMaterial;
+
+    auto mat_glass = std::make_shared<DielectricMaterial>(
+        DielectricMaterial::Create(1.2f) // glass
+    );
+
+    world.AddObject(std::make_shared<Sphere>(Vec3(50.0f, 0.0f, 180.0f), 25.f, mat_glass));
+
+    // Red sphere in the middle of the scene
+    world.AddObject(std::make_shared<Sphere>(
+        Vec3(0.0f, 0.0f, 220.0f), 20.f, mat_sphere
+    ));
+
     world.AddObject(std::make_shared<Sphere>(cg_raytracing::math::Vec3(0.0f, -45.0f, 180.0f), 15.f, mat_light1));
     world.AddObject(std::make_shared<Sphere>(cg_raytracing::math::Vec3(-40.f, 10.0f, 170.0f), 15.f, mat_light2));
 
