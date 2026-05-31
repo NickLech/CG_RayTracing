@@ -274,9 +274,12 @@ void Mesh::ReadMaterialFromMtl(std::string _mtl_path) {
             if (ss >> texture_path_str && !this->m_material.empty()) {
                 // Resolve the path relative to the MTL file location
                 std::filesystem::path mtl_dir =
-                    std::filesystem::path(_mtl_path).parent_path();
+                    std::filesystem::path(_mtl_path).parent_path().parent_path();
+                // print mtl_dir and texture_path_str for debugging
+                std::println(std::cout, "MTL Directory: {}", mtl_dir.string());
+                std::println(std::cout, "Texture Path: {}", texture_path_str);
                 std::string full_texture_path =
-                    (mtl_dir / texture_path_str).string();
+                    (mtl_dir / "textures" / texture_path_str).string();
 
                 // Assign the texture to the current material
                 this->m_material.back()->m_diffuse_map =
