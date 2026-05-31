@@ -1,2 +1,11 @@
 # Blender 5.1.2 MTL File: 'scene.blend'
 # www.blender.org
+
+newmtl EmissiveLight
+Ka 0.0000 0.0000 0.0000     # Ambient: 0 (The light is the source)
+Kd 0.0000 0.0000 0.0000     # Diffuse: 0 (Doesn't need to reflect other lights)
+Ks 0.0000 0.0000 0.0000     # Specular: 0
+Ke 1.0000 0.9000 0.8000     # Emission: Warm white glow
+Ns 1.0000
+d 1.0000
+illum 0                     # Constant color (Always bright)

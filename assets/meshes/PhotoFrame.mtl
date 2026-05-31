@@ -1,2 +1,10 @@
 # Blender 5.1.2 MTL File: 'scene.blend'
 # www.blender.org
+
+newmtl FrameBorder
+Ka 0.2000 0.1500 0.1000     # Dark ambient
+Kd 0.3500 0.2000 0.0500     # Dark brown wood color
+Ks 0.2000 0.2000 0.2000     # Slight satin shine
+Ns 20.0000                  # Tighter highlights
+illum 2
+map_Kd rickroll.jpg

@@ -1,2 +1,10 @@
 # Blender 5.1.2 MTL File: 'scene.blend'
 # www.blender.org
+
+newmtl GreenPlane
+Ka 0.1000 0.1000 0.1000     # Ambient: very low dark gray
+Kd 0.1000 0.6000 0.1000     # Diffuse: The actual green color (RGB)
+Ks 0.0000 0.0000 0.0000     # Specular: 0 means no shiny highlights
+Ns 1.0000                   # Specular exponent: Doesn't matter if Ks is 0
+d 1.0000                    # Fully opaque
+illum 1                     # Illumination model 1: Diffuse and Ambient only

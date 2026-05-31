@@ -1,5 +1,5 @@
-#include "mesh.hpp"
 #include "material.hpp"
+#include "mesh.hpp"
 #include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
 #include <filesystem>
@@ -14,8 +14,7 @@ TEST_CASE("Mesh OBJ Loader") {
 
     SECTION("File Not Found Boundary") {
         auto dummy_material = std::make_shared<StandardMaterial>(
-            StandardMaterial::Diffuse({0.5f, 0.5f, 0.5f})
-        );
+            StandardMaterial::Diffuse({0.5f, 0.5f, 0.5f}));
         Mesh mesh(Vec3(0, 0, 0));
         auto result = mesh.LoadFromObj("./invalid.obj", 1.0);
 
@@ -26,8 +25,7 @@ TEST_CASE("Mesh OBJ Loader") {
     SECTION("Valid Single Face Geometry Integrity") {
 
         auto dummy_material = std::make_shared<StandardMaterial>(
-            StandardMaterial::Diffuse({0.5f, 0.5f, 0.5f})
-        );
+            StandardMaterial::Diffuse({0.5f, 0.5f, 0.5f}));
         Mesh mesh(Vec3(0, 0, 0));
         auto result = mesh.LoadFromObj(test_file_path, 1.0);
         REQUIRE(result == 0);
@@ -62,8 +60,7 @@ TEST_CASE("Mesh OBJ Loader") {
     SECTION("Face Creation Index Mapping Verification") {
         // Exact test scenario from your input
         auto dummy_material = std::make_shared<StandardMaterial>(
-            StandardMaterial::Diffuse({0.5f, 0.5f, 0.5f})
-        );
+            StandardMaterial::Diffuse({0.5f, 0.5f, 0.5f}));
         Mesh mesh(Vec3(0, 0, 0));
         auto result = mesh.LoadFromObj(test_file_path, 1.0);
 
@@ -118,7 +115,7 @@ TEST_CASE("material file loader test") {
         // Verify basic uniform floating-point definitions
         REQUIRE(wood_mat->m_ns == Catch::Approx(96.078431f));
         REQUIRE(wood_mat->m_ni == Catch::Approx(1.000000f));
-        REQUIRE(wood_mat->m_d  == Catch::Approx(1.000000f));
+        REQUIRE(wood_mat->m_d == Catch::Approx(1.000000f));
         REQUIRE(wood_mat->m_illum == 0);
 
         // Verify vector transformations matching the parsed strings
@@ -145,6 +142,9 @@ TEST_CASE("material file loader test") {
         REQUIRE(plastic_mat->m_kd.y == Catch::Approx(0.000000f));
         REQUIRE(plastic_mat->m_kd.z == Catch::Approx(0.000000f));
         REQUIRE(plastic_mat->m_ns == Catch::Approx(50.0f));
+        REQUIRE(plastic_mat->m_ke.x == Catch::Approx(0.5f));
+        REQUIRE(plastic_mat->m_ke.y == Catch::Approx(0.0f));
+        REQUIRE(plastic_mat->m_ke.z == Catch::Approx(0.0f));
     }
 }
 TEST_CASE("obj + mtl file loader") {
@@ -154,10 +154,9 @@ TEST_CASE("obj + mtl file loader") {
 
     REQUIRE(std::filesystem::exists(test_obj_path));
 
-    SECTION("Lampada"){
+    SECTION("Lampada") {
         Mesh mesh(Vec3(0, 0, 0));
         auto result = mesh.LoadFromObj(test_obj_path, 1.0);
-
 
         REQUIRE(result == 0);
         REQUIRE(mesh.m_vertex_positions.size() == 226);
@@ -176,7 +175,7 @@ TEST_CASE("obj + mtl file loader") {
         // Verify basic uniform floating-point definitions
         REQUIRE(wood_mat->m_ns == Catch::Approx(250.0f));
         REQUIRE(wood_mat->m_ni == Catch::Approx(1.500000f));
-        REQUIRE(wood_mat->m_d  == Catch::Approx(1.000000f));
+        REQUIRE(wood_mat->m_d == Catch::Approx(1.000000f));
         REQUIRE(wood_mat->m_illum == 2);
 
         // Verify vector transformations matching the parsed strings
@@ -192,5 +191,4 @@ TEST_CASE("obj + mtl file loader") {
         REQUIRE(wood_mat->m_ks.y == Catch::Approx(0.500000f));
         REQUIRE(wood_mat->m_ks.z == Catch::Approx(0.500000f));
     }
-
 }

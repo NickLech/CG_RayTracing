@@ -28,7 +28,8 @@ cg_raytracing::math::Vec3 StandardMaterial::Shade(
         break;
     case 1:
         // Lambert only: ambient + diffuse
-        color = (m_ka + active_diffuse * diffuse) * _light_color * _light_intensity;
+        color =
+            (m_ka + active_diffuse * diffuse) * _light_color * _light_intensity;
         break;
     case 2: {
         // Phong: ambient + diffuse + specular
@@ -44,10 +45,11 @@ cg_raytracing::math::Vec3 StandardMaterial::Shade(
         break;
     }
     default:
-        color = (m_ka + active_diffuse * diffuse) * _light_color * _light_intensity;
+        color =
+            (m_ka + active_diffuse * diffuse) * _light_color * _light_intensity;
         break;
     }
-    return color;
+    return color + m_ke;
 }
 
 /// Scatters an incoming ray based on the material type.
@@ -59,6 +61,10 @@ StandardMaterial::Scatter(const math::Ray &_ray_in,
     cg_raytracing::math::Vec3 albedo = m_kd;
     if (m_diffuse_map) {
         albedo = m_diffuse_map->GetPixel(_hit.m_tex_u, _hit.m_tex_v);
+    }
+    // if ke is non-zero, the material is emissive and does not scatter
+    if (m_ke.x > 0.0f || m_ke.y > 0.0f || m_ke.z > 0.0f) {
+        return std::nullopt;
     }
 
     // Metal: specular reflection with roughness-based perturbation

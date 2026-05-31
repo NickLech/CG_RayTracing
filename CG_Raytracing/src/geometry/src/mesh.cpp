@@ -31,7 +31,7 @@ std::optional<HitRecord> Mesh::Hit(const cg_raytracing::math::Ray &_ray,
         auto hit_result =
             current_triangle.Hit(_ray, _t_min, closest_hit_distance);
         if (hit_result) {
-            float b_u = hit_result->m_u; 
+            float b_u = hit_result->m_u;
             float b_v = hit_result->m_v;
             float b_w = 1.0f - b_u - b_v;
 
@@ -135,15 +135,17 @@ Mesh::LoadFromObj(std::filesystem::path _obj_path, float _scale) {
                 break;
             case 1:
                 // TODO:append to vertex array
+                // did some tweaks in the loading because I exported the objects
+                // incorrectly from Blender
                 if (info_index == 0) {
                     this->m_vertex_positions.push_back(
                         math::Vec3(std::stof(pattern) * _scale, 0, 0));
                 } else if (info_index == 1) {
                     this->m_vertex_positions.back().y =
-                        std::stof(pattern) * _scale;
+                        -std::stof(pattern) * _scale;
                 } else {
                     this->m_vertex_positions.back().z =
-                        std::stof(pattern) * _scale;
+                        -std::stof(pattern) * _scale;
                 }
                 info_index += 1;
                 break;
@@ -269,15 +271,19 @@ void Mesh::ReadMaterialFromMtl(std::string _mtl_path) {
                 auto &ks = this->m_material.back()->m_ks;
                 ss >> ks.x >> ks.y >> ks.z;
             }
+        } else if (command == "Ke") {
+            if (!this->m_material.empty()) {
+                auto &ke = this->m_material.back()->m_ke;
+                ss >> ke.x >> ke.y >> ke.z;
+            }
         } else if (command == "map_Kd") {
             std::string texture_path_str;
             if (ss >> texture_path_str && !this->m_material.empty()) {
                 // Resolve the path relative to the MTL file location
-                std::filesystem::path mtl_dir =
-                    std::filesystem::path(_mtl_path).parent_path().parent_path();
+                std::filesystem::path mtl_dir = std::filesystem::path(_mtl_path)
+                                                    .parent_path()
+                                                    .parent_path();
                 // print mtl_dir and texture_path_str for debugging
-                std::println(std::cout, "MTL Directory: {}", mtl_dir.string());
-                std::println(std::cout, "Texture Path: {}", texture_path_str);
                 std::string full_texture_path =
                     (mtl_dir / "textures" / texture_path_str).string();
 
