@@ -3,35 +3,35 @@
 
 #include "CG_Raytracing.h"
 
-#include <vec3.hpp>
-#include <kd_tree.hpp>
-#include <hittable.hpp>
-#include <triangle.hpp>
-#include <sphere.hpp>
-#include <cube.hpp>
-#include <mesh.hpp>
-#include <camera.hpp>
-#include <config.hpp>
 #include <GLContext.hpp>
 #include <IndexBuffer.hpp>
-//#include <point_light.hpp>
+#include <camera.hpp>
+#include <config.hpp>
+#include <cube.hpp>
+#include <hittable.hpp>
+#include <kd_tree.hpp>
+#include <mesh.hpp>
+#include <sphere.hpp>
+#include <triangle.hpp>
+#include <vec3.hpp>
+// #include <point_light.hpp>
 #include <Shader.hpp>
 #include <Texture2D.hpp>
 #include <VertexBuffer.hpp>
-#include <world.hpp>
 #include <material.hpp>
+#include <world.hpp>
 
 #include <GL/glew.h>
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_assert.h>
 #include <bit>
+#include <chrono>
 #include <ctime>
 #include <filesystem>
 #include <format>
 #include <iostream>
 #include <memory>
 #include <print>
-#include <chrono>
 
 void DebugCallback(GLenum source, GLenum type, GLuint id, GLenum severity,
                    GLsizei length, const GLchar *message,
@@ -64,11 +64,11 @@ struct Vertex2D {
 
 // function to move the camera around. Probably in the future is better to move
 // this in another file and optimize it
-void HandleKeyDown(SDL_Event &_ev,
-                   std::unique_ptr<cg_raytracing::scene::Camera> &_my_camera,
-                   cg_raytracing::Texture2D &_tex,
-                   cg_raytracing::scene::World const& _world,
-                   std::vector<std::shared_ptr<cg_raytracing::geometry::Hittable>> const& _hittables) {
+void HandleKeyDown(
+    SDL_Event &_ev, std::unique_ptr<cg_raytracing::scene::Camera> &_my_camera,
+    cg_raytracing::Texture2D &_tex, cg_raytracing::scene::World const &_world,
+    std::vector<std::shared_ptr<cg_raytracing::geometry::Hittable>> const
+        &_hittables) {
     SDL_assert(_ev.type == SDL_EVENT_KEY_DOWN);
     auto must_update = false;
     switch (_ev.key.scancode) {
@@ -109,29 +109,28 @@ void HandleKeyDown(SDL_Event &_ev,
         static int s_current_preset = 0;
         s_current_preset = (s_current_preset + 1) % 3;
 
-        const auto& preset = Config::CAMERA_PRESETS[s_current_preset];
+        const auto &preset = Config::CAMERA_PRESETS[s_current_preset];
 
         using Camera = cg_raytracing::scene::Camera;
 
         _my_camera.reset(nullptr);
         _my_camera = std::make_unique<Camera>(
             Config::SENSOR_SIZE_WIDTH, Config::FOCAL_LENGTH,
-            Config::IMAGE_WIDTH, Config::IMAGE_HEIGHT,
-            preset[0], preset[1]
-        );
-        
+            Config::IMAGE_WIDTH, Config::IMAGE_HEIGHT, preset[0], preset[1]);
+
         must_update = true;
         break;
     } // don't remove, may cause errors due to variable declaration in switch
-    
+
     default:
         break;
     }
 
     if (must_update) {
         _my_camera->BurstRays(_world);
-        _tex.CopyFromBuffer(std::bit_cast<uint8_t const*>(_my_camera->m_img_buf.data()), 0, 0, 0,
-            _tex.GetWidth(), _tex.GetHeight(),
+        _tex.CopyFromBuffer(
+            std::bit_cast<uint8_t const *>(_my_camera->m_img_buf.data()), 0, 0,
+            0, _tex.GetWidth(), _tex.GetHeight(),
             cg_raytracing::PixelFormat::RGB,
             cg_raytracing::PixelDataType::UNSIGNED_BYTE);
     }
@@ -305,14 +304,11 @@ int main() {
     // hittables = ObjLoader::Load("model.obj", &mat);
 
     auto mat_sphere = std::make_shared<StandardMaterial>(
-    StandardMaterial::Diffuse({.4f, .4f, .8f}, {.5f, .5f, .5f})
-    );
+        StandardMaterial::Diffuse({.4f, .4f, .8f}, {.5f, .5f, .5f}));
     auto mat_cube = std::make_shared<StandardMaterial>(
-        StandardMaterial::Diffuse({.4f, .4f, .8f}, {.5f, .5f, .5f })
-    );
+        StandardMaterial::Diffuse({.4f, .4f, .8f}, {.5f, .5f, .5f}));
     auto mat_train = std::make_shared<StandardMaterial>(
-        StandardMaterial::Diffuse({0.7f, 0.2f, 0.2f})
-    );
+        StandardMaterial::Diffuse({0.7f, 0.2f, 0.2f}));
 
     auto world = World::CreateEmpty(1000.f);
 
@@ -320,24 +316,46 @@ int main() {
 
     // Emissive sphere acting as a light source in the scene
     auto mat_light1 = std::make_shared<EmissiveMaterial>(
-        EmissiveMaterial::Create({1.0f, 1.0f, 0.0f}, 5.0f)
-    );
+        EmissiveMaterial::Create({1.0f, 1.0f, 0.0f}, 5.0f));
     auto mat_light2 = std::make_shared<EmissiveMaterial>(
         EmissiveMaterial::Create({ 0.0f, 1.0f, 0.0f }, 10.0f)
     );
-    world.AddObject(std::make_shared<Sphere>(cg_raytracing::math::Vec3(0.0f, -45.0f, 180.0f), 15.f, mat_light1));
-    world.AddObject(std::make_shared<Sphere>(cg_raytracing::math::Vec3(-40.f, 10.0f, 170.0f), 15.f, mat_light2));
+    world.AddObject(std::make_shared<Sphere>(
+        cg_raytracing::math::Vec3(50.0f, -45.0f, 180.0f), 15.f, mat_light1));
+    world.AddObject(std::make_shared<Sphere>(cg_raytracing::math::Vec3(-40.f, 10.0f,
+    170.0f), 15.f, mat_light2));
 
+    std::shared_ptr<Mesh> table =
+        std::make_shared<Mesh>(Vec3(0.0f, 0.0f, 150.0f));
+    // std::shared_ptr<Mesh> background =
+    //     std::make_shared<Mesh>(Vec3(0.0f, 0.0f, 150.0f));
+    // std::shared_ptr<Mesh> ceilingLight =
+    //     std::make_shared<Mesh>(Vec3(0.0f, 0.0f, 150.0f));
+    // std::shared_ptr<Mesh> photoFrame =
+    //     std::make_shared<Mesh>(Vec3(0.0f, 0.0f, 150.0f));
+    // std::shared_ptr<Mesh> photo =
+    //     std::make_shared<Mesh>(Vec3(0.0f, 0.0f, 150.0f));
+    // TODO: handle exceptions
+    auto loader_status = table->LoadFromObj("./assets/meshes/Table.obj", 0.1);
+    // auto loader_status =
+    //     background->LoadFromObj("./assets/meshes/Background.obj", 10.0);
+    // loader_status =
+    //     ceilingLight->LoadFromObj("./assets/meshes/CeilingLight.obj", 10.0);
+    // loader_status =
+    //     photoFrame->LoadFromObj("./assets/meshes/PhotoFrame.obj", 10.0);
+    // loader_status = photo->LoadFromObj("./assets/meshes/Photo.obj", 10.0);
+    // train->Rotate(Vec3(0.5f, 0.0f, 0.0f));
 
-    std::shared_ptr<Mesh> train = std::make_shared<Mesh>(Vec3(0.0f, 0.0f, 150.0f));
-    // TODO: handle exception
-    auto loader_status = train->LoadFromObj("./assets/meshes/Lampada.obj", 10.0);
-    train->Rotate(Vec3(0.5f, 0.0f, 0.0f));
-
-    world.AddObject(std::make_shared<Sphere>(Vec3(0.0f, 0.0f, 200.0f), 30.f, mat_sphere));
-    world.AddObject(std::make_shared<Cube>(Vec3(0.0f, 85.0f, 200.0f), 50.f, mat_cube));
-    world.AddObject(std::make_shared<Sphere>(Vec3(0.0f, 0.0f, 250.0f), 20.f, mat_cube));
-    world.AddObject(train);
+    // world.AddObject(std::make_shared<Sphere>(Vec3(0.0f, 0.0f, 200.0f), 30.f,
+    // mat_sphere)); world.AddObject(std::make_shared<Cube>(Vec3(0.0f, 85.0f,
+    // 200.0f), 50.f, mat_cube));
+    // world.AddObject(std::make_shared<Sphere>(Vec3(0.0f, 0.0f, 250.0f), 20.f,
+    // mat_cube));
+    world.AddObject(table);
+    // world.AddObject(background);
+    // world.AddObject(ceilingLight);
+    // world.AddObject(photoFrame);
+    // world.AddObject(photo);
 
     world.UpdateTree();
 
@@ -346,13 +364,15 @@ int main() {
     my_camera->BurstRays(world);
 
     auto end = std::chrono::system_clock::now();
-    auto diff = std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count();
+    auto diff =
+        std::chrono::duration_cast<std::chrono::microseconds>(end - begin)
+            .count();
     std::println(std::cout, "Took {} ms", (double)diff / 1e3);
 
-
-    tex.CopyFromBuffer(std::bit_cast<uint8_t const*>(my_camera->m_img_buf.data()), 0, 0, 0, tex.GetWidth(),
-                       tex.GetHeight(), cg_raytracing::PixelFormat::RGB,
-                       cg_raytracing::PixelDataType::UNSIGNED_BYTE);
+    tex.CopyFromBuffer(
+        std::bit_cast<uint8_t const *>(my_camera->m_img_buf.data()), 0, 0, 0,
+        tex.GetWidth(), tex.GetHeight(), cg_raytracing::PixelFormat::RGB,
+        cg_raytracing::PixelDataType::UNSIGNED_BYTE);
     tex.BindTexture(GL_TEXTURE_2D);
 
     bool close = false;
