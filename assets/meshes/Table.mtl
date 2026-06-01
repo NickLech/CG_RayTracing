@@ -3,7 +3,7 @@
 
 newmtl WoodMaterial
 Ns 0.0000                  # Specular exponent (Low for matte wood)
-Ka 1.0000 1.0000 1.0000     # Ambient color
+Ka 0.0000 0.0000 0.0000     # Ambient color
 Kd 0.6000 0.4000 0.2000     # Diffuse color (Fallback if texture fails)
 Ks 0.1000 0.1000 0.1000     # Specular color (Dull reflection)
 Ni 1.4500                   # Index of refraction

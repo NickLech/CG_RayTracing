@@ -20,9 +20,6 @@ struct Material {
     virtual bool IsEmissive() const { return false; }
 
     virtual math::Vec3 Shade(const HitRecord&  _hit,
-                              const math::Vec3& _light_pos,
-                              const math::Vec3& _light_color,
-                              float             _light_intensity,
                               const math::Ray&  _ray) const = 0;
     virtual ~Material() = default;
 
@@ -46,9 +43,6 @@ struct StandardMaterial : public Material {
     std::shared_ptr<cg_raytracing::geometry::Texture> m_diffuse_map = nullptr;
 
     math::Vec3 Shade(const HitRecord&  _hit,
-                     const math::Vec3& _light_pos,
-                     const math::Vec3& _light_color,
-                     float             _light_intensity,
                      const math::Ray&  _ray) const override;
 
 
@@ -85,9 +79,6 @@ struct EmissiveMaterial : public Material {
     bool IsEmissive() const override { return true; }
     
     math::Vec3 Shade(const HitRecord&  _hit,
-                     const math::Vec3& _light_pos,
-                     const math::Vec3& _light_color,
-                     float             _light_intensity,
                      const math::Ray&  _ray) const override {
         // an emissive material simply returns its emission color multiplied by its intensity
         return m_emission * m_intensity;
