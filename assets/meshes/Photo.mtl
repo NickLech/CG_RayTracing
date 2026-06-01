@@ -5,8 +5,7 @@ newmtl PhotoCanvas
 Ka 1.0000 1.0000 1.0000
 Kd 0.0000 0.0000 0.0000     # Keep Kd white so the texture colors are pure
 Ks 0.0000 0.0000 0.0000     # Photos are usually matte inside the frame
-Ns 1.0000
-illum 9
-
-# This points to your actual image file
+Ns 0.0000
+illum 1
 map_Kd rickroll.jpg
+

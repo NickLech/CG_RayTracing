@@ -318,34 +318,34 @@ int main() {
     auto mat_light1 = std::make_shared<EmissiveMaterial>(
         EmissiveMaterial::Create({1.0f, 1.0f, 0.0f}, 5.0f));
     auto mat_light2 = std::make_shared<EmissiveMaterial>(
-        EmissiveMaterial::Create({ 1.0f, 1.0f, 0.0f }, 100.0f)
-    );
-    //world.AddObject(std::make_shared<Sphere>(
-    //    cg_raytracing::math::Vec3(50.0f, -45.0f, 180.0f), 15.f, mat_light1));
-    world.AddObject(std::make_shared<Sphere>(cg_raytracing::math::Vec3(0.f, 10.0f,
-    150.0f), 5.f, mat_light2));
+        EmissiveMaterial::Create({1.0f, 1.0f, 0.0f}, 100.0f));
+    // world.AddObject(std::make_shared<Sphere>(
+    //     cg_raytracing::math::Vec3(50.0f, -45.0f, 180.0f), 15.f, mat_light1));
+    //  world.AddObject(std::make_shared<Sphere>(cg_raytracing::math::Vec3(0.f, 10.0f,
+    //  70.0f), 1.f, mat_light2));
 
     std::shared_ptr<Mesh> table =
-        std::make_shared<Mesh>(Vec3(0.0f, 30.0f, 150.0f));
+        std::make_shared<Mesh>(Vec3(0.0f, 20.0f, 100.0f));
     std::shared_ptr<Mesh> background =
-        std::make_shared<Mesh>(Vec3(0.0f, 30.0f, 150.0f));
+        std::make_shared<Mesh>(Vec3(0.0f, 20.0f, 100.0f));
     std::shared_ptr<Mesh> ceilingLight =
-        std::make_shared<Mesh>(Vec3(0.0f, 60.0f, 150.0f));
+        std::make_shared<Mesh>(Vec3(0.0f, 20.0f, 100.0f));
     std::shared_ptr<Mesh> photoFrame =
-        std::make_shared<Mesh>(Vec3(0.0f, 30.0f, 150.0f));
+        std::make_shared<Mesh>(Vec3(0.0f, 20.0f, 100.0f));
     std::shared_ptr<Mesh> photo =
-        std::make_shared<Mesh>(Vec3(0.0f, 30.0f, 200.0f));
+        std::make_shared<Mesh>(Vec3(0.0f, 20.0f, 98.0f));
+
+
 
     // TODO: handle exceptions
     auto loader_status = table->LoadFromObj("./assets/meshes/Table.obj", 3.0);
     loader_status =
         background->LoadFromObj("./assets/meshes/Background.obj", 3.0);
     loader_status =
-        ceilingLight->LoadFromObj("./assets/meshes/CeilingLight.obj", 5);
+        ceilingLight->LoadFromObj("./assets/meshes/CeilingLight.obj", 3.0);
     loader_status =
         photoFrame->LoadFromObj("./assets/meshes/PhotoFrame.obj", 3.0);
     loader_status = photo->LoadFromObj("./assets/meshes/Photo.obj", 3.0);
-    // train->Rotate(Vec3(0.5f, 0.0f, 0.0f));
 
     // world.AddObject(std::make_shared<Sphere>(Vec3(0.0f, 0.0f, 200.0f), 30.f,
     // mat_sphere)); world.AddObject(std::make_shared<Cube>(Vec3(0.0f, 85.0f,
@@ -355,7 +355,7 @@ int main() {
 
     world.AddObject(table);
     world.AddObject(background);
-    //world.AddObject(ceilingLight);
+    world.AddObject(ceilingLight);
     world.AddObject(photoFrame);
     world.AddObject(photo);
 

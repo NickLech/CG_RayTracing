@@ -53,6 +53,7 @@ cg_raytracing::math::Vec3 StandardMaterial::Shade(
     return color + m_ke;
 }
 
+
 /// Scatters an incoming ray based on the material type.
 /// Diffuse: random direction in hemisphere (Lambert).
 /// Metal (illum 2): specular reflection with roughness perturbation.

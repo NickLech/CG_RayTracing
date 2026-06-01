@@ -32,7 +32,7 @@ struct Material {
 // Standard implementation in MTL format
 struct StandardMaterial : public Material {
     math::Vec3  m_ka    = {0.1f, 0.1f, 0.1f};
-    math::Vec3  m_kd;
+    math::Vec3  m_kd    = {0.0f, 0.0f, 0.0f};
     math::Vec3  m_ks    = {0.5f, 0.5f, 0.5f};
     math::Vec3  m_ke    = {0.0f, 0.0f, 0.0f};
     float       m_ns    = 0.0f;
