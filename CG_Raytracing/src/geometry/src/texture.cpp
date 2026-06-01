@@ -5,7 +5,7 @@
 namespace cg_raytracing::geometry {
 Texture::Texture(const std::filesystem::path _path) {
     stbi_set_flip_vertically_on_load(true);
-    m_data = stbi_load(_path.c_str(), &m_width, &m_height, &m_channels, 3);
+    m_data = stbi_load(_path.string().c_str(), &m_width, &m_height, &m_channels, 3);
 }
 
 Texture::~Texture() {
