@@ -6,6 +6,6 @@ Ka 1.0000 1.0000 1.0000
 Kd 0.0000 0.0000 0.0000     # Keep Kd white so the texture colors are pure
 Ks 0.0000 0.0000 0.0000     # Photos are usually matte inside the frame
 Ns 0.0000
-illum 1
+illum 0
 map_Kd rickroll.jpg
 

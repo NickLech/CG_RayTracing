@@ -443,6 +443,7 @@ int main() {
     SDL_GL_DestroyContext(context);
     SDL_DestroyWindow(window);
 
+
     SDL_Quit();
     return 0;
 }
