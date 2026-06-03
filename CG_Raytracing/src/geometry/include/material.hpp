@@ -55,6 +55,14 @@ struct StandardMaterial : public Material {
     std::optional<std::pair<math::Ray, math::Vec3>>
     Scatter(const math::Ray &_ray_in, const HitRecord &_hit) const override;
 
+    bool IsEmissive() const override {
+        if ((m_ke.x > 0.0) | (m_ke.y > 0.0) | (m_ke.z > 0.0)) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
     static StandardMaterial Diffuse(math::Vec3 _kd,
                                     math::Vec3 _ka = {0.1f, 0.1f, 0.1f}) {
         StandardMaterial m{};

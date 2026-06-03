@@ -10,45 +10,37 @@ cg_raytracing::math::Vec3 StandardMaterial::Shade(
     const HitRecord &_hit, const cg_raytracing::math::Vec3 &_light_pos,
     const cg_raytracing::math::Vec3 &_light_color, float _light_intensity,
     const cg_raytracing::math::Ray &_ray) const {
+
     cg_raytracing::math::Vec3 active_diffuse = m_kd;
     if (m_diffuse_map) {
         active_diffuse = m_diffuse_map->GetPixel(_hit.m_tex_u, _hit.m_tex_v);
     }
 
-    // cg_raytracing::math::Vec3 light_dir =
-    //     (_light_pos - _hit.m_point).normalized();
-    // float diffuse = std::max<float>(_hit.m_normal.dot(light_dir), 0.0f);
+    cg_raytracing::math::Vec3 light_vec = _light_pos - _hit.m_point;
+    float dist_sq = light_vec.length_squared();
+    cg_raytracing::math::Vec3 light_dir = light_vec.normalized();
 
-    cg_raytracing::math::Vec3 color{};
+    float attenuation = _light_intensity / (dist_sq + 1.0f);
+    float diff_factor = std::max<float>(_hit.m_normal.dot(light_dir), 0.0f);
+
+    cg_raytracing::math::Vec3 lighting_result{};
+
     switch (m_illum) {
     case 0:
-        // Flat color, no lighting
-        color = active_diffuse;
+        lighting_result = active_diffuse;
         break;
     case 1:
-        // Lambert only: ambient + diffuse
-        color = (m_ka + active_diffuse);
+    case 2:
+        lighting_result =
+            (m_ka + active_diffuse * diff_factor) * _light_color * attenuation;
         break;
-    case 2: {
-        // Phong: ambient + diffuse + specular
-        // cg_raytracing::math::Vec3 view_dir =
-        //     (_ray.m_origin - _hit.m_point).normalized();
-        // cg_raytracing::math::Vec3 reflect_dir =
-        //     (_hit.m_normal * 2.0f * _hit.m_normal.dot(light_dir) - light_dir)
-        //         .normalized();
-        // float spec =
-        //     std::pow(std::max<float>(view_dir.dot(reflect_dir), 0.0f), m_ns);
-        // color = (m_ka + active_diffuse * diffuse + m_ks * spec) *
-        // _light_color *
-        //         _light_intensity;
-        color = (m_ka + active_diffuse);
-        break;
-    }
     default:
-        color = (m_ka + active_diffuse);
+        lighting_result =
+            (m_ka + active_diffuse * diff_factor) * _light_color * attenuation;
         break;
     }
-    return color + m_ke;
+
+    return lighting_result + m_ke;
 }
 
 /// Scatters an incoming ray based on the material type.
@@ -79,7 +71,7 @@ StandardMaterial::Scatter(const math::Ray &_ray_in,
 
     // Diffuse: random hemisphere scatter weighted by albedo
     math::Vec3 scatter_dir = RandomInHemisphere(_hit.m_normal);
-    return {{math::Ray{_hit.m_point, scatter_dir}, m_kd}};
+    return {{math::Ray{_hit.m_point, scatter_dir}, albedo}};
 }
 
 std::optional<std::pair<math::Ray, math::Vec3>>

@@ -5,8 +5,8 @@ newmtl WoodMaterial
 Ns 1.0000                  # Specular exponent (Low for matte wood)
 Ka 0.0000 0.0000 0.0000     # Ambient color
 Kd 0.6000 0.4000 0.2000     # Diffuse color (Fallback if texture fails)
-Ks 0.1000 0.1000 0.1000     # Specular color (Dull reflection)
+Ks 0.5000 0.5000 0.5000     # Specular color (Dull reflection)
 Ni 1.4500                   # Index of refraction
 d 1.0000                    # Dissolve (Opacity)
-illum 1                     # Illumination model (Diffuse + Specular)
+illum 2                     # Illumination model (Diffuse + Specular)
 map_Kd oak_veneer_01_diff_1k.jpg
