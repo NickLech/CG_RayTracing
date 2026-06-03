@@ -147,28 +147,26 @@ void Camera::RenderThreadRenderBlock(RenderThreadData const& _data, RenderParam 
                             hit->m_point = math::Ray(hit->m_point, hit->m_normal).At(geometry::Hittable::TMIN * 1.01f);
                             auto scattered = hit->m_material->Scatter(curr_ray, hit.value());
 
-                            // Shade with no external light — emissive materials
-                            // return their own emission color from Shade()
-                            auto emission = hit->m_material->Shade(
-                                hit.value(), curr_ray
-                            );
-                            final_color = final_color * emission;
-
-                            // Check if the surface is emissive — if so, accumulate its emission.
-                            // Otherwise treat as total absorption (e.g. a black hole material).
-                            // if (hit->m_material->IsEmissive()) {
-                            //     
-                            // }
-                            // else {
-                            //     final_color = math::Vec3(); // Total absorption
-                            // }
-
                             if (!scattered.has_value()) {
+                                // Check if the surface is emissive — if so, accumulate its emission.
+                                // Otherwise treat as total absorption (e.g. a black hole material).
+                                if (hit->m_material->IsEmissive()) {
+                                    // Shade with no external light — emissive materials
+                                    // return their own emission color from Shade()
+                                    auto emission = hit->m_material->Shade(
+                                        hit.value(), {}, {}, 0.0f, curr_ray
+                                    );
+                                    final_color = final_color * emission;
+                                }
+                                else {
+                                    final_color = math::Vec3(); // Total absorption
+                                }
                                 break;
                             }
 
-                            auto [direction, _] = scattered.value();
-                            //final_color = final_color * albedo;
+                            auto [direction, albedo] = scattered.value();
+
+                            final_color = final_color * albedo;
 
                             if (Config::MAX_DEPTH == curr_iteration + 1) {
                                 break;

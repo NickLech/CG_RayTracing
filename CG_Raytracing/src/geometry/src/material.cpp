@@ -7,9 +7,9 @@
 namespace cg_raytracing::geometry {
 
 cg_raytracing::math::Vec3 StandardMaterial::Shade(
-    const HitRecord &_hit,
+    const HitRecord &_hit, const cg_raytracing::math::Vec3 &_light_pos,
+    const cg_raytracing::math::Vec3 &_light_color, float _light_intensity,
     const cg_raytracing::math::Ray &_ray) const {
-
     cg_raytracing::math::Vec3 active_diffuse = m_kd;
     if (m_diffuse_map) {
         active_diffuse = m_diffuse_map->GetPixel(_hit.m_tex_u, _hit.m_tex_v);
@@ -27,8 +27,7 @@ cg_raytracing::math::Vec3 StandardMaterial::Shade(
         break;
     case 1:
         // Lambert only: ambient + diffuse
-        color =
-            (m_ka + active_diffuse);
+        color = (m_ka + active_diffuse);
         break;
     case 2: {
         // Phong: ambient + diffuse + specular
@@ -39,20 +38,18 @@ cg_raytracing::math::Vec3 StandardMaterial::Shade(
         //         .normalized();
         // float spec =
         //     std::pow(std::max<float>(view_dir.dot(reflect_dir), 0.0f), m_ns);
-        // color = (m_ka + active_diffuse * diffuse + m_ks * spec) * _light_color *
+        // color = (m_ka + active_diffuse * diffuse + m_ks * spec) *
+        // _light_color *
         //         _light_intensity;
-        color =
-            (m_ka + active_diffuse);
+        color = (m_ka + active_diffuse);
         break;
     }
     default:
-        color =
-            (m_ka + active_diffuse);
+        color = (m_ka + active_diffuse);
         break;
     }
     return color + m_ke;
 }
-
 
 /// Scatters an incoming ray based on the material type.
 /// Diffuse: random direction in hemisphere (Lambert).
@@ -82,7 +79,46 @@ StandardMaterial::Scatter(const math::Ray &_ray_in,
 
     // Diffuse: random hemisphere scatter weighted by albedo
     math::Vec3 scatter_dir = RandomInHemisphere(_hit.m_normal);
-    return {{math::Ray{_hit.m_point, scatter_dir}, albedo}};
+    return {{math::Ray{_hit.m_point, scatter_dir}, m_kd}};
 }
 
+std::optional<std::pair<math::Ray, math::Vec3>>
+DielectricMaterial::Scatter(const math::Ray &_ray_in,
+                            const HitRecord &_hit) const {
+    float refraction_ratio = _hit.m_front_face ? (1.0f / m_ior) : m_ior;
+
+    math::Vec3 unit_dir = _ray_in.m_direction.normalized();
+
+    float cos_theta = (-unit_dir).dot(_hit.m_normal);
+    if (cos_theta > 1.0f)
+        cos_theta = 1.0f;
+    else if (cos_theta < 0.0f)
+        cos_theta = 0.0f;
+
+    float sin_theta = std::sqrt(1.0f - cos_theta * cos_theta);
+
+    math::Vec3 refracted{};
+    if (refraction_ratio * sin_theta > 1.0f) {
+        // Total internal reflection
+        refracted =
+            unit_dir - _hit.m_normal * 2.0f * unit_dir.dot(_hit.m_normal);
+    } else {
+        // Snell's law refraction
+        math::Vec3 r_perp =
+            (unit_dir + _hit.m_normal * cos_theta) * refraction_ratio;
+        math::Vec3 r_para =
+            _hit.m_normal *
+            -std::sqrt(std::abs(1.0f - r_perp.length_squared()));
+        refracted = r_perp + r_para;
+    }
+
+    // Blend between straight-through (0) and full refraction (1).
+    // Lower values make the object appear more transparent with less
+    // distortion.
+    constexpr float BLEND = 0.01f;
+    math::Vec3 direction =
+        (unit_dir * (1.0f - BLEND) + refracted * BLEND).normalized();
+
+    return {{math::Ray{_hit.m_point, direction}, {1.0f, 1.0f, 1.0f}}};
+}
 } // namespace cg_raytracing::geometry
