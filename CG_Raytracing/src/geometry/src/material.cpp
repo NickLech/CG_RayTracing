@@ -76,22 +76,16 @@ namespace cg_raytracing::geometry {
 
         float sin_theta = std::sqrt(1.0f - cos_theta * cos_theta);
 
-        math::Vec3 refracted{};
+        math::Vec3 direction{};
         if (refraction_ratio * sin_theta > 1.0f) {
             // Total internal reflection
-            refracted = unit_dir - _hit.m_normal * 2.0f * unit_dir.dot(_hit.m_normal);
+            direction = unit_dir - _hit.m_normal * 2.0f * unit_dir.dot(_hit.m_normal);
         } else {
-            // Snell's law refraction
             math::Vec3 r_perp = (unit_dir + _hit.m_normal * cos_theta) * refraction_ratio;
             math::Vec3 r_para = _hit.m_normal * -std::sqrt(std::abs(1.0f - r_perp.length_squared()));
-            refracted = r_perp + r_para;
+            direction = r_perp + r_para;
         }
 
-        // Blend between straight-through (0) and full refraction (1).
-        // Lower values make the object appear more transparent with less distortion.
-        constexpr float BLEND = 0.01f;
-        math::Vec3 direction = (unit_dir * (1.0f - BLEND) + refracted * BLEND).normalized();
-
-        return {{ math::Ray{_hit.m_point, direction}, {1.0f, 1.0f, 1.0f} }};
+        return {{ math::Ray{_hit.m_point, direction.normalized()}, {1.0f, 1.0f, 1.0f} }};
     }
 } // namespace cg_raytracing::geometry

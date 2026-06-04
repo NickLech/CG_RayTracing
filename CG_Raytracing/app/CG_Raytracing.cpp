@@ -326,6 +326,8 @@ int main() {
         EmissiveMaterial::Create({ 0.0f, 1.0f, 0.0f }, 10.0f)
     );
 
+    // Transparent sphere acting as a glass ball in the scene
+
     using DielectricMaterial = cg_raytracing::geometry::DielectricMaterial;
 
     auto mat_glass = std::make_shared<DielectricMaterial>(
@@ -338,6 +340,8 @@ int main() {
     world.AddObject(std::make_shared<Sphere>(
         Vec3(0.0f, 0.0f, 220.0f), 20.f, mat_sphere
     ));
+
+
 
     world.AddObject(std::make_shared<Sphere>(cg_raytracing::math::Vec3(0.0f, -45.0f, 180.0f), 15.f, mat_light1));
     world.AddObject(std::make_shared<Sphere>(cg_raytracing::math::Vec3(-40.f, 10.0f, 170.0f), 15.f, mat_light2));

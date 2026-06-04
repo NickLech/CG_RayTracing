@@ -93,58 +93,45 @@ void Camera::RenderThreadRender(RenderThreadData& _data) {
 
 void Camera::RenderThreadRenderBlock(RenderThreadData const& _data, RenderParam _param) {
     auto world = _param.world;
-    //auto light = _param.light;
 
     auto start_x = _param.pos_x;
     auto start_y = _param.pos_y;
     auto end_x = start_x + _param.size_x;
     auto end_y = start_y + _param.size_y;
 
-    //std::println(std::cout, "From X: {}, Y: {} to X: {}, Y: {}", start_x, start_y, end_x, end_y);
-
     for (uint32_t y = start_y; y < end_y; y++) {
         for (uint32_t x = start_x; x < end_x; x++) {
 
-            uint32_t base_idx =
-                (y * this->m_image_width + x) * 3;
+            uint32_t base_idx = (y * this->m_image_width + x) * 3;
 
             uint32_t r{}, g{}, b{};
 
             for (uint32_t ray_index = 0; ray_index < Config::RAY_PER_PIXEL; ray_index++) {
-                
 
                 const math::Ray& ray =
                     this->m_rays_matrix[
                         (y * this->m_image_width + x) * Config::RAY_PER_PIXEL + ray_index
                     ];
 
-                float t = .8f;
-                    // static_cast<float>(y) /
-                    // this->m_image_height;
-
                 for (auto curr_iteration : std::views::iota(0U, Config::RENDER_ITERATION)) {
-                    // Stack of rays, together with the iteration number
-                    // std::stack<std::pair<math::Ray, size_t>> rays_to_follow{};
-                    // rays_to_follow.push({ ray, 0 });
 
-                    // Do not use stack,
-                    // we follow only one ray and its reflections/refractions
-                    // per iteration
                     auto next_ray = ray;
-                    auto curr_iteration = 0U;
+                    auto bounce_depth = 0U;
 
                     auto final_color = math::Vec3(1.f, 1.f, 1.f);
-                    auto bg_color = math::Vec3(.3f, .5f, 1.f);
+                    auto bg_color    = math::Vec3(.3f, .5f, 1.f);
 
                     while (true) {
                         auto curr_ray = next_ray;
 
                         std::optional<geometry::HitRecord> hit{};
-                        //hit = world->Hit(curr_ray);
                         hit = world->HitNoAllocations(curr_ray);
 
                         if (hit) {
-                            hit->m_point = math::Ray(hit->m_point, hit->m_normal).At(geometry::Hittable::TMIN * 1.01f);
+                            float nudge_sign = hit->m_front_face ? 1.0f : -1.0f;
+                            hit->m_point = math::Ray(hit->m_point, hit->m_normal * nudge_sign)
+                                               .At(geometry::Hittable::TMIN * 1.01f);
+
                             auto scattered = hit->m_material->Scatter(curr_ray, hit.value());
 
                             if (!scattered.has_value()) {
@@ -157,32 +144,27 @@ void Camera::RenderThreadRenderBlock(RenderThreadData const& _data, RenderParam 
                                         hit.value(), {}, {}, 0.0f, curr_ray
                                     );
                                     final_color = final_color * emission;
-                                }
-                                else {
+                                } else {
                                     final_color = math::Vec3(); // Total absorption
                                 }
                                 break;
                             }
 
                             auto [direction, albedo] = scattered.value();
-
                             final_color = final_color * albedo;
 
-                            if (Config::MAX_DEPTH == curr_iteration + 1) {
+                            if (bounce_depth + 1 >= Config::MAX_DEPTH) {
+                                final_color = final_color * bg_color;
                                 break;
                             }
 
-                            ++curr_iteration;
+                            ++bounce_depth;
                             next_ray = direction;
-                        }
-                        else {
+                        } else {
                             final_color = final_color * bg_color;
                             break;
                         }
                     }
-                    
-                    //final_color = final_color * math::Vec3(1.f, ((1.0f - t) * 180 + t * 80) / 255.f, 1.f);
-
 
                     // Clamp to [0,1]
                     final_color.x = std::clamp(final_color.x, 0.0f, 1.0f);
@@ -194,8 +176,6 @@ void Camera::RenderThreadRenderBlock(RenderThreadData const& _data, RenderParam 
                     g += static_cast<uint8_t>(final_color.y * 255.0f);
                     b += static_cast<uint8_t>(final_color.z * 255.0f);
                 }
-
-                
             }
 
             r /= Config::RAY_PER_PIXEL;
