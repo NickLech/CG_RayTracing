@@ -332,67 +332,12 @@ int main() {
 
     world.AddObject(std::make_shared<Sphere>(Vec3(50.0f, 0.0f, 180.0f), 25.f, mat_glass));
 
-    // Red sphere in the middle of the scene
-    world.AddObject(std::make_shared<Sphere>(
-        cg_raytracing::math::Vec3(0.f, 10.0f, 70.0f), 1.f, mat_light2));
-
-    // std::shared_ptr<Mesh> table =
-    //     std::make_shared<Mesh>(Vec3(0.0f, 20.0f, 100.0f));
-    // std::shared_ptr<Mesh> background =
-    //     std::make_shared<Mesh>(Vec3(0.0f, 20.0f, 100.0f));
-    // std::shared_ptr<Mesh> ceilingLight =
-    //     std::make_shared<Mesh>(Vec3(0.0f, 20.0f, 100.0f));
-    // std::shared_ptr<Mesh> photoFrame =
-    //     std::make_shared<Mesh>(Vec3(0.0f, 20.0f, 100.0f));
-    // std::shared_ptr<Mesh> photo =
-    //     std::make_shared<Mesh>(Vec3(0.0f, 20.0f, 98.0f));
-    //     EmissiveMaterial::Create({ 0.0f, 1.0f, 0.0f }, 10.0f)
-    // );
-    //
-    // using DielectricMaterial = cg_raytracing::geometry::DielectricMaterial;
-    //
-    // auto mat_glass = std::make_shared<DielectricMaterial>(
-    //     DielectricMaterial::Create(1.2f) // glass
-    // );
-    //
-    // world.AddObject(std::make_shared<Sphere>(Vec3(50.0f, 0.0f, 180.0f), 25.f,
-    // mat_glass));
-    //
-    // // Red sphere in the middle of the scene
-    // world.AddObject(std::make_shared<Sphere>(
-    //     Vec3(0.0f, 0.0f, 220.0f), 20.f, mat_sphere
-    // ));
-    //
-    // world.AddObject(std::make_shared<Sphere>(cg_raytracing::math::Vec3(0.0f,
-    // -45.0f, 180.0f), 15.f, mat_light1));
-    // world.AddObject(std::make_shared<Sphere>(cg_raytracing::math::Vec3(-40.f, 10.0f,
-    // 170.0f), 15.f, mat_light2));
-
 
     world.AddObject(std::make_shared<Sphere>(cg_raytracing::math::Vec3(0.0f, -45.0f, 180.0f), 15.f, mat_light1));
     world.AddObject(std::make_shared<Sphere>(cg_raytracing::math::Vec3(-40.f, 10.0f, 170.0f), 15.f, mat_light2));
 
-    // TODO: handle exceptions
-    // auto loader_status = table->LoadFromObj("./assets/meshes/Table.obj", 3.0);
-    // loader_status =
-    //     background->LoadFromObj("./assets/meshes/Background.obj", 3.0);
-    // loader_status =
-    //     ceilingLight->LoadFromObj("./assets/meshes/CeilingLight.obj", 3.0);
-    // loader_status =
-    //     photoFrame->LoadFromObj("./assets/meshes/PhotoFrame.obj", 3.0);
-    // loader_status = photo->LoadFromObj("./assets/meshes/Photo.obj", 3.0);
-
-    // world.AddObject(std::make_shared<Sphere>(Vec3(0.0f, 0.0f, 200.0f), 30.f,
-    // mat_sphere)); world.AddObject(std::make_shared<Cube>(Vec3(0.0f, 85.0f,
-    // 200.0f), 50.f, mat_cube));
-    // world.AddObject(std::make_shared<Sphere>(Vec3(0.0f, 0.0f, 250.0f), 20.f,
-    // mat_cube));
-
-    // world.AddObject(table);
-    // world.AddObject(background);
-    // world.AddObject(ceilingLight);
-    // world.AddObject(photoFrame);
-    // world.AddObject(photo);
+    world.AddObject(std::make_shared<Sphere>(Vec3(0.0f, 0.0f, 200.0f), 30.f, mat_sphere));
+    world.AddObject(std::make_shared<Cube>(Vec3(0.0f, 85.0f, 200.0f), 50.f, mat_cube));
 
     world.UpdateTree();
 

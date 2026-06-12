@@ -141,7 +141,7 @@ void Camera::RenderThreadRenderBlock(RenderThreadData const& _data, RenderParam 
                                     // Shade with no external light — emissive materials
                                     // return their own emission color from Shade()
                                     auto emission = hit->m_material->Shade(
-                                        hit.value(), {}, {}, 0.0f, curr_ray
+                                        hit.value(), curr_ray
                                     );
                                     final_color = final_color * emission;
                                 } else {
