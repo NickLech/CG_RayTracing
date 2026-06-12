@@ -329,6 +329,11 @@ int main() {
     auto mat_glass = std::make_shared<DielectricMaterial>(
         DielectricMaterial::Create(1.2f) // glass
     );
+    
+    std::shared_ptr<Mesh> table =
+        std::make_shared<Mesh>(Vec3(0.0f, 20.0f, 100.0f));
+    auto loader_status = table->LoadFromObj("./assets/meshes/Table.obj", 3.0);
+    world.AddObject(table);
 
     world.AddObject(std::make_shared<Sphere>(Vec3(50.0f, 0.0f, 180.0f), 25.f, mat_glass));
 
