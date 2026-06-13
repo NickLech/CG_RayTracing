@@ -15,8 +15,8 @@ inline constexpr float CAMERA_POSITION[3] = {0.0, 0.0, 0.0};
 // x, y, z angle of rotation (in radiants)
 inline constexpr float CAMERA_DIRECTION[3] = {0.0, 0.0, 0.0};
 
-inline constexpr uint32_t RAY_PER_PIXEL = 4;
-inline constexpr uint32_t RENDER_ITERATION = 10;
+inline constexpr uint32_t RAY_PER_PIXEL = 10;
+inline constexpr uint32_t RENDER_ITERATION = 50;
 inline const float CAMERA_PRESETS[][2][3] = {
     {
         {0.0f, 0.0f, 0.0f},

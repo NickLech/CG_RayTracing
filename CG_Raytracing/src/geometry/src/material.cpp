@@ -58,7 +58,7 @@ StandardMaterial::Scatter(const math::Ray &_ray_in,
         float fuzz_amount = (m_ns > 0.0f) ? (1.0f / m_ns) : 0.0f;
         math::Vec3 fuzz = RandomInHemisphere(_hit.m_normal) * fuzz_amount;
         return {
-            {math::Ray{_hit.m_point, (reflected + fuzz).normalized()}, m_ks}};
+            {math::Ray{_hit.m_point, (reflected + fuzz).normalized()}, albedo }};
     }
 
     // Diffuse: random hemisphere scatter weighted by albedo
