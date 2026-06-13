@@ -62,13 +62,111 @@ struct Vertex2D {
     }
 };
 
+cg_raytracing::scene::World BuildScene1() {
+    using Hittable = cg_raytracing::geometry::Hittable;
+    using World = cg_raytracing::scene::World;
+    using StandardMaterial = cg_raytracing::geometry::StandardMaterial;
+    using DielectricMaterial = cg_raytracing::geometry::DielectricMaterial;
+    using EmissiveMaterial = cg_raytracing::geometry::EmissiveMaterial;
+    using Sphere = cg_raytracing::geometry::Sphere;
+    using Cube = cg_raytracing::geometry::Cube;
+    using Mesh = cg_raytracing::geometry::Mesh;
+    using Vec3 = cg_raytracing::math::Vec3;
+
+    auto mat_sphere = std::make_shared<StandardMaterial>(
+        StandardMaterial::Diffuse({.4f, .4f, .8f}, {.5f, .5f, .5f}));
+    auto mat_cube = std::make_shared<StandardMaterial>(
+        StandardMaterial::Diffuse({.4f, .4f, .8f}, {.5f, .5f, .5f}));
+    auto mat_train = std::make_shared<StandardMaterial>(
+        StandardMaterial::Diffuse({0.7f, 0.2f, 0.2f}));
+
+    auto world = World::CreateEmpty(1000.f);
+
+    // Emissive sphere acting as a light source in the scene
+    auto mat_light1 = std::make_shared<EmissiveMaterial>(
+        EmissiveMaterial::Create({1.0f, 1.0f, 0.0f}, 10000.0f));
+    auto mat_light2 = std::make_shared<EmissiveMaterial>(
+        EmissiveMaterial::Create({1.0f, 1.0f, 0.0f}, 100.0f));
+    // world.AddObject(std::make_shared<Sphere>(
+    //     cg_raytracing::math::Vec3(50.0f, -45.0f, 180.0f), 15.f, mat_light1));
+    // Transparent sphere acting as a glass ball in the scene
+
+    auto mat_glass = std::make_shared<DielectricMaterial>(
+        DielectricMaterial::Create(1.5f, {1.0f, 0.0f, 0.0f}, 0.1f) // glass
+    );
+
+    std::shared_ptr<Mesh> table =
+        std::make_shared<Mesh>(Vec3(0.0f, 20.0f, 100.0f));
+    auto loader_status = table->LoadFromObj("./assets/meshes/Table.obj", 3.0);
+    world.AddObject(table);
+
+    world.AddObject(std::make_shared<Sphere>(Vec3(-25.0f, 0.0f, 180.0f), 25.f, mat_glass));
+
+    world.AddObject(std::make_shared<Sphere>(Vec3(0.0f, -45.0f, 180.0f), 15.f, mat_light1));
+    world.AddObject(std::make_shared<Sphere>(Vec3(-40.f, 10.0f, 170.0f), 15.f, mat_light2));
+
+    world.AddObject(std::make_shared<Sphere>(Vec3(0.0f, 0.0f, 200.0f), 30.f, mat_sphere));
+    world.AddObject(std::make_shared<Cube>(Vec3(0.0f, 85.0f, 200.0f), 50.f, mat_cube));
+
+    world.UpdateTree();
+    return world;
+}
+
+cg_raytracing::scene::World BuildScene2() {
+    // Demo scene: one sphere per material, equally spaced in a row
+    using World = cg_raytracing::scene::World;
+    using StandardMaterial = cg_raytracing::geometry::StandardMaterial;
+    using DielectricMaterial = cg_raytracing::geometry::DielectricMaterial;
+    using EmissiveMaterial = cg_raytracing::geometry::EmissiveMaterial;
+    using Sphere = cg_raytracing::geometry::Sphere;
+    using Vec3 = cg_raytracing::math::Vec3;
+
+    auto world = World::CreateEmpty(1000.f);
+
+    const float radius = 20.0f;
+    const float spacing = 55.0f; // distance between sphere centers
+    const float z = 180.0f;
+    const float y = 0.0f;
+    // Center the row: 5 spheres, total width = 4 * spacing
+    const float x_start = -2.0f * spacing;
+
+    // 1. Diffuse (Lambert) — blue
+    auto mat_diffuse = std::make_shared<StandardMaterial>(
+        StandardMaterial::Diffuse({0.2f, 0.3f, 0.9f}));
+
+    // 2. Metal, low roughness (sharp reflection) — silver
+    auto mat_metal_sharp = std::make_shared<StandardMaterial>(
+        StandardMaterial::Metal({0.9f, 0.1f, 0.1f}, {0.95f, 0.1f, 0.1f}, 500.0f));
+
+    // 3. Metal, high roughness (blurry reflection) — gold tint
+    auto mat_metal_rough = std::make_shared<StandardMaterial>(
+        StandardMaterial::Metal({0.8f, 0.6f, 0.2f}, {0.9f, 0.7f, 0.3f}, 10.0f));
+
+    // 4. Dielectric (glass)
+    auto mat_glass = std::make_shared<DielectricMaterial>(
+        DielectricMaterial::Create(1.5f, {0.1f, 1.0f, 0.1f}, 0.0f));
+
+    // 5. Emissive (light source)
+    auto mat_emissive = std::make_shared<EmissiveMaterial>(
+        EmissiveMaterial::Create({1.0f, 0.4f, 0.1f}, 5.0f));
+
+    world.AddObject(std::make_shared<Sphere>(Vec3(x_start + 0 * spacing, y, z), radius, mat_diffuse));
+    world.AddObject(std::make_shared<Sphere>(Vec3(x_start + 1 * spacing, y, z), radius, mat_metal_sharp));
+    world.AddObject(std::make_shared<Sphere>(Vec3(x_start + 2 * spacing, y, z), radius, mat_emissive));
+    world.AddObject(std::make_shared<Sphere>(Vec3(x_start + 3 * spacing, y, z), radius, mat_glass));
+    world.AddObject(std::make_shared<Sphere>(Vec3(x_start + 4 * spacing, y, z), radius, mat_metal_rough));
+
+    world.UpdateTree();
+    return world;
+}
+
 // function to move the camera around. Probably in the future is better to move
 // this in another file and optimize it
 void HandleKeyDown(
     SDL_Event &_ev, std::unique_ptr<cg_raytracing::scene::Camera> &_my_camera,
-    cg_raytracing::Texture2D &_tex, cg_raytracing::scene::World const &_world,
-    std::vector<std::shared_ptr<cg_raytracing::geometry::Hittable>> const
-        &_hittables) {
+    cg_raytracing::Texture2D &_tex,
+    std::vector<cg_raytracing::scene::World> &_scenes,
+    int &_current_scene) {
     SDL_assert(_ev.type == SDL_EVENT_KEY_DOWN);
     auto must_update = false;
     switch (_ev.key.scancode) {
@@ -122,12 +220,19 @@ void HandleKeyDown(
         break;
     } // don't remove, may cause errors due to variable declaration in switch
 
+    case SDL_SCANCODE_TAB: {
+        // Switch between scenes (Tab key)
+        _current_scene = (_current_scene + 1) % static_cast<int>(_scenes.size());
+        must_update = true;
+        break;
+    }
+
     default:
         break;
     }
 
     if (must_update) {
-        _my_camera->BurstRays(_world);
+        _my_camera->BurstRays(_scenes[_current_scene]);
         _tex.CopyFromBuffer(
             std::bit_cast<uint8_t const *>(_my_camera->m_img_buf.data()), 0, 0,
             0, _tex.GetWidth(), _tex.GetHeight(),
@@ -303,52 +408,15 @@ int main() {
     // che implementi i metodi richiesti
     // hittables = ObjLoader::Load("model.obj", &mat);
 
-    auto mat_sphere = std::make_shared<StandardMaterial>(
-        StandardMaterial::Diffuse({.4f, .4f, .8f}, {.5f, .5f, .5f}));
-    auto mat_cube = std::make_shared<StandardMaterial>(
-        StandardMaterial::Diffuse({.4f, .4f, .8f}, {.5f, .5f, .5f}));
-    auto mat_train = std::make_shared<StandardMaterial>(
-        StandardMaterial::Diffuse({0.7f, 0.2f, 0.2f}));
-
-    auto world = World::CreateEmpty(1000.f);
-
-    using EmissiveMaterial = cg_raytracing::geometry::EmissiveMaterial;
-
-    // Emissive sphere acting as a light source in the scene
-    auto mat_light1 = std::make_shared<EmissiveMaterial>(
-        EmissiveMaterial::Create({1.0f, 1.0f, 0.0f}, 10000.0f));
-    auto mat_light2 = std::make_shared<EmissiveMaterial>(
-
-        EmissiveMaterial::Create({1.0f, 1.0f, 0.0f}, 100.0f));
-    // world.AddObject(std::make_shared<Sphere>(
-    //     cg_raytracing::math::Vec3(50.0f, -45.0f, 180.0f), 15.f, mat_light1));
-    // Transparent sphere acting as a glass ball in the scene
-
-    using DielectricMaterial = cg_raytracing::geometry::DielectricMaterial;
-
-    auto mat_glass = std::make_shared<DielectricMaterial>(
-        DielectricMaterial::Create(1.5f, {1.0f, 0.0f, 0.0f}, 0.1f) // glass
-    );
-    
-    std::shared_ptr<Mesh> table =
-        std::make_shared<Mesh>(Vec3(0.0f, 20.0f, 100.0f));
-    auto loader_status = table->LoadFromObj("./assets/meshes/Table.obj", 3.0);
-    world.AddObject(table);
-
-    world.AddObject(std::make_shared<Sphere>(Vec3(-25.0f, 0.0f, 180.0f), 25.f, mat_glass));
-
-
-    world.AddObject(std::make_shared<Sphere>(cg_raytracing::math::Vec3(0.0f, -45.0f, 180.0f), 15.f, mat_light1));
-    world.AddObject(std::make_shared<Sphere>(cg_raytracing::math::Vec3(-40.f, 10.0f, 170.0f), 15.f, mat_light2));
-
-    world.AddObject(std::make_shared<Sphere>(Vec3(0.0f, 0.0f, 200.0f), 30.f, mat_sphere));
-    world.AddObject(std::make_shared<Cube>(Vec3(0.0f, 85.0f, 200.0f), 50.f, mat_cube));
-
-    world.UpdateTree();
+    // Build all scenes and store them; Tab switches between them
+    std::vector<World> scenes;
+    scenes.push_back(BuildScene1());
+    scenes.push_back(BuildScene2());
+    int current_scene = 0;
 
     auto begin = std::chrono::system_clock::now();
 
-    my_camera->BurstRays(world);
+    my_camera->BurstRays(scenes[current_scene]);
 
     auto end = std::chrono::system_clock::now();
     auto diff =
@@ -368,7 +436,7 @@ int main() {
         while (SDL_PollEvent(&ev)) {
             switch (ev.type) {
             case SDL_EVENT_KEY_DOWN:
-                HandleKeyDown(ev, my_camera, tex, world, hittables);
+                HandleKeyDown(ev, my_camera, tex, scenes, current_scene);
                 break;
             case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
                 close = true;
