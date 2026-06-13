@@ -83,6 +83,8 @@ struct StandardMaterial : public Material {
 struct DielectricMaterial : public Material {
     // Index of refraction (air=1.0, glass≈1.5, water≈1.33, diamond≈2.4)
     float m_ior = 1.5f;
+    math::Vec3 m_tint = {1.0f, 1.0f, 1.0f}; // slight color, e.g. {0.8f, 1.0f, 0.8f} for green glass
+    float m_reflectivity = 0.0f; // 0 = pure refraction, 1 = pure reflection
 
     bool IsEmissive() const override {
         return false;
@@ -96,6 +98,14 @@ struct DielectricMaterial : public Material {
 
     std::optional<std::pair<math::Ray, math::Vec3>>
     Scatter(const math::Ray &_ray_in, const HitRecord &_hit) const override;
+
+    static DielectricMaterial Create(float _ior = 1.5f, math::Vec3 _tint = {1.0f, 1.0f, 1.0f}, float _reflectivity = 0.0f) {
+        DielectricMaterial m{};
+        m.m_ior = _ior;
+        m.m_tint = _tint;
+        m.m_reflectivity = _reflectivity;
+        return m;
+    }
 
     static DielectricMaterial Create(float _ior = 1.5f) {
         DielectricMaterial m{};

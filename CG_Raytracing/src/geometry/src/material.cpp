@@ -96,7 +96,10 @@ DielectricMaterial::Scatter(const math::Ray &_ray_in,
         direction = r_perp + r_para;
     }
 
-    return {
-        {math::Ray{_hit.m_point, direction.normalized()}, {1.0f, 1.0f, 1.0f}}};
+    // Nudge origin along the refracted/reflected direction to escape the surface,
+    // bypassing the camera.cpp normal-based nudge which goes inward for exit rays
+    math::Vec3 origin = _hit.m_point + direction.normalized();
+
+    return {{math::Ray{origin, direction.normalized()}, m_tint}};
 }
 } // namespace cg_raytracing::geometry

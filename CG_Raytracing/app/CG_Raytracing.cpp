@@ -327,7 +327,7 @@ int main() {
     using DielectricMaterial = cg_raytracing::geometry::DielectricMaterial;
 
     auto mat_glass = std::make_shared<DielectricMaterial>(
-        DielectricMaterial::Create(1.2f) // glass
+        DielectricMaterial::Create(1.5f, {1.0f, 0.0f, 0.0f}, 0.1f) // glass
     );
     
     std::shared_ptr<Mesh> table =
@@ -335,7 +335,7 @@ int main() {
     auto loader_status = table->LoadFromObj("./assets/meshes/Table.obj", 3.0);
     world.AddObject(table);
 
-    world.AddObject(std::make_shared<Sphere>(Vec3(50.0f, 0.0f, 180.0f), 25.f, mat_glass));
+    world.AddObject(std::make_shared<Sphere>(Vec3(-25.0f, 0.0f, 180.0f), 25.f, mat_glass));
 
 
     world.AddObject(std::make_shared<Sphere>(cg_raytracing::math::Vec3(0.0f, -45.0f, 180.0f), 15.f, mat_light1));
