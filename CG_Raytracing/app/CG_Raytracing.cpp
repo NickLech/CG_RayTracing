@@ -120,12 +120,13 @@ cg_raytracing::scene::World BuildScene2() {
     using EmissiveMaterial = cg_raytracing::geometry::EmissiveMaterial;
     using Sphere = cg_raytracing::geometry::Sphere;
     using Vec3 = cg_raytracing::math::Vec3;
+    using Cube = cg_raytracing::geometry::Cube;
 
-    auto world = World::CreateEmpty(1000.f);
+    auto world = World::CreateEmpty(2000.f);
 
     const float radius = 20.0f;
-    const float spacing = 55.0f; // distance between sphere centers
-    const float z = 180.0f;
+    const float spacing = 41.0f; // distance between sphere centers
+    const float z = 100.0f;
     const float y = 0.0f;
     // Center the row: 5 spheres, total width = 4 * spacing
     const float x_start = -2.0f * spacing;
@@ -136,25 +137,74 @@ cg_raytracing::scene::World BuildScene2() {
 
     // 2. Metal, low roughness (sharp reflection) — silver
     auto mat_metal_sharp = std::make_shared<StandardMaterial>(
-        StandardMaterial::Metal({0.9f, 0.1f, 0.1f}, {0.95f, 0.1f, 0.1f}, 500.0f));
+        StandardMaterial::Metal({0.8f, 0.8f, 0.8f}, {0.95f, 0.1f, 0.1f}, 500.0f));
 
     // 3. Metal, high roughness (blurry reflection) — gold tint
     auto mat_metal_rough = std::make_shared<StandardMaterial>(
-        StandardMaterial::Metal({0.8f, 0.6f, 0.2f}, {0.9f, 0.7f, 0.3f}, 10.0f));
+        StandardMaterial::Metal({0.8f, 0.8f, 0.8f}, {0.9f, 0.7f, 0.3f}, 5.0f));
 
     // 4. Dielectric (glass)
     auto mat_glass = std::make_shared<DielectricMaterial>(
-        DielectricMaterial::Create(1.5f, {0.1f, 1.0f, 0.1f}, 0.0f));
+        DielectricMaterial::Create(1.5f, {1.f, 1.f, 1.f}, 0.5f));
 
     // 5. Emissive (light source)
     auto mat_emissive = std::make_shared<EmissiveMaterial>(
         EmissiveMaterial::Create({1.0f, 0.4f, 0.1f}, 5.0f));
 
-    world.AddObject(std::make_shared<Sphere>(Vec3(x_start + 0 * spacing, y, z), radius, mat_diffuse));
+    auto mat_cube = std::make_shared<StandardMaterial>(
+        StandardMaterial::Diffuse({ .3f, .9f, .3f }, { .5f, .5f, .5f }));
+
+    // world.AddObject(std::make_shared<Sphere>(Vec3(x_start + 0 * spacing, y, z), radius, mat_diffuse));
     world.AddObject(std::make_shared<Sphere>(Vec3(x_start + 1 * spacing, y, z), radius, mat_metal_sharp));
-    world.AddObject(std::make_shared<Sphere>(Vec3(x_start + 2 * spacing, y, z), radius, mat_emissive));
-    world.AddObject(std::make_shared<Sphere>(Vec3(x_start + 3 * spacing, y, z), radius, mat_glass));
-    world.AddObject(std::make_shared<Sphere>(Vec3(x_start + 4 * spacing, y, z), radius, mat_metal_rough));
+    world.AddObject(std::make_shared<Sphere>(Vec3(x_start + 2 * spacing, y, z), radius, mat_diffuse));
+    world.AddObject(std::make_shared<Sphere>(Vec3(x_start + 3 * spacing, y, z), radius, mat_metal_rough));
+
+    world.AddObject(std::make_shared<Cube>(Vec3(0.0f, 325.0f, 100.0f), 300.f, mat_cube));
+    // world.AddObject(std::make_shared<Sphere>(Vec3(x_start + 4 * spacing, y, z), radius, mat_metal_rough));
+
+    world.UpdateTree();
+    return world;
+}
+
+cg_raytracing::scene::World BuildScene3() {
+    // Demo scene: one sphere per material, equally spaced in a row
+    using World = cg_raytracing::scene::World;
+    using StandardMaterial = cg_raytracing::geometry::StandardMaterial;
+    using DielectricMaterial = cg_raytracing::geometry::DielectricMaterial;
+    using EmissiveMaterial = cg_raytracing::geometry::EmissiveMaterial;
+    using Sphere = cg_raytracing::geometry::Sphere;
+    using Vec3 = cg_raytracing::math::Vec3;
+    using Cube = cg_raytracing::geometry::Cube;
+
+    auto world = World::CreateEmpty(2000.f);
+
+    const float radius = 20.0f;
+    const float spacing = 41.0f; // distance between sphere centers
+    const float z = 100.0f;
+    const float y = 0.0f;
+    // Center the row: 5 spheres, total width = 4 * spacing
+    const float x_start = -2.0f * spacing;
+
+    // 1. Diffuse (Lambert) — blue
+    auto mat_diffuse1 = std::make_shared<StandardMaterial>(
+        StandardMaterial::Diffuse({ 0.2f, 0.3f, 0.9f }));
+
+    // 2. Metal, low roughness (sharp reflection) — silver
+    auto mat_metal = std::make_shared<StandardMaterial>(
+        StandardMaterial::Metal({ 0.2f, 0.9f, 0.3f }, { 0.95f, 0.1f, 0.1f }, 1.0f));
+
+    // 4. Dielectric (glass)
+    auto mat_glass = std::make_shared<DielectricMaterial>(
+        DielectricMaterial::Create(0.9f, { 0.9f, 0.9f, 0.9f }, 0.5f));
+
+    auto mat_cube = std::make_shared<StandardMaterial>(
+        StandardMaterial::Diffuse({ .3f, .3f, .9f }, { .5f, .5f, .5f }));
+
+    world.AddObject(std::make_shared<Sphere>(Vec3(.0f, .0f, 100.0f), radius, mat_diffuse1));
+    world.AddObject(std::make_shared<Sphere>(Vec3(40.5f, -10.0f, 120.5f), radius, mat_metal));
+    world.AddObject(std::make_shared<Sphere>(Vec3(-7.5f, 0.f, 60.f), radius, mat_glass));
+
+    world.AddObject(std::make_shared<Cube>(Vec3(0.0f, 320.5f, 100.0f), 300.f, mat_cube));
 
     world.UpdateTree();
     return world;
@@ -244,6 +294,7 @@ void HandleKeyDown(
 int main() {
     using Camera = cg_raytracing::scene::Camera;
     std::unique_ptr<Camera> my_camera = std::make_unique<Camera>();
+    my_camera->Translate(cg_raytracing::math::Vec3(.0f, -10.f, -50.0f));
 
     if (!SDL_Init(SDL_INIT_VIDEO)) {
         std::println(std::cout, "SDL_Init error: {}", SDL_GetError());
@@ -377,21 +428,6 @@ int main() {
                    .value();
     tex.SetUpscaleFilter(cg_raytracing::SamplerFilter::NEAREST);
     tex.SetDownscaleFilter(cg_raytracing::SamplerFilter::LINEAR);
-    // std::vector<uint8_t> temp_buf{};
-    // temp_buf.resize(tex.GetSizeBytes());
-    // for (auto &val : temp_buf) {
-    //     val = (uint8_t)(rand() % 256);
-    // }
-    // tex.CopyFromBuffer(temp_buf.data(), 0, 0, 0, tex.GetWidth(),
-    //                    tex.GetHeight(), cg_raytracing::PixelFormat::RGB,
-    //                    cg_raytracing::PixelDataType::UNSIGNED_BYTE);
-
-    /*
-    cg_raytracing::scene::PointLight light(
-        cg_raytracing::math::Vec3(0.0f, 0.0f, 150.0f),
-        cg_raytracing::math::Vec3(1.0f, 1.0f, 1.0f),
-        1.5f
-    );*/
 
     using Hittable = cg_raytracing::geometry::Hittable;
     using World = cg_raytracing::scene::World;
@@ -402,17 +438,13 @@ int main() {
     using Vec3 = cg_raytracing::math::Vec3;
 
     std::vector<std::shared_ptr<Hittable>> hittables;
-    // Filippo qua va inserito il loader:
-    // Uhmm, questo richide che il loader ritorni
-    // una classe Mesh derivata da Hittable
-    // che implementi i metodi richiesti
-    // hittables = ObjLoader::Load("model.obj", &mat);
 
     // Build all scenes and store them; Tab switches between them
     std::vector<World> scenes;
     scenes.push_back(BuildScene1());
     scenes.push_back(BuildScene2());
-    int current_scene = 0;
+    scenes.push_back(BuildScene3());
+    int current_scene = 2;
 
     auto begin = std::chrono::system_clock::now();
 

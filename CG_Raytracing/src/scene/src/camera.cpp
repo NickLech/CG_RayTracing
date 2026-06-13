@@ -119,7 +119,7 @@ void Camera::RenderThreadRenderBlock(RenderThreadData const& _data, RenderParam 
                     auto bounce_depth = 0U;
 
                     auto final_color = math::Vec3(1.f, 1.f, 1.f);
-                    auto bg_color    = math::Vec3(.3f, .5f, 1.f);
+                    auto bg_color    = math::Vec3(.5f, .7f, 1.f);
 
                     while (true) {
                         auto curr_ray = next_ray;
