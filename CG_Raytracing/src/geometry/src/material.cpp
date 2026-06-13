@@ -53,8 +53,8 @@ StandardMaterial::Scatter(const math::Ray &_ray_in,
     // Metal: specular reflection with roughness-based perturbation
     if (m_illum == 2) {
         math::Vec3 reflected =
-            _ray_in.m_direction -
-            _hit.m_normal * 2.0f * _hit.m_normal.dot(_ray_in.m_direction);
+            (_ray_in.m_direction -
+            _hit.m_normal * 2.0f * _hit.m_normal.dot(_ray_in.m_direction)).normalized();
         float fuzz_amount = (m_ns > 0.0f) ? (1.0f / m_ns) : 0.0f;
         math::Vec3 fuzz = RandomInHemisphere(_hit.m_normal) * fuzz_amount;
         return {
@@ -82,8 +82,14 @@ DielectricMaterial::Scatter(const math::Ray &_ray_in,
 
     float sin_theta = std::sqrt(1.0f - cos_theta * cos_theta);
 
+    auto reflectance = [](double _cos, double _ior) {
+        auto r0 = (1 - _ior) / (1 + _ior);
+        r0 = r0 * r0;
+        return r0 + (1 - r0) * std::pow((1 - _cos), 5.);
+    };
+
     math::Vec3 direction{};
-    if (refraction_ratio * sin_theta > 1.0f) {
+    if ((refraction_ratio * sin_theta > 1.0f) || reflectance(cos_theta, refraction_ratio) > math::GetRandomDouble()) {
         // Total internal reflection
         direction =
             unit_dir - _hit.m_normal * 2.0f * unit_dir.dot(_hit.m_normal);
