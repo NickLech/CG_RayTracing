@@ -735,6 +735,59 @@ namespace cg_raytracing::geometry {
 		return std::nullopt;
 	}
 
+	std::optional<std::pair<HitRecord, size_t>> KDTree::RayIntersectsSingleObjectIterative(
+		math::Ray const& _ray,
+		std::vector<std::shared_ptr<Hittable>> const& _hittables,
+		float _tmin,
+		float _tmax
+	) const {
+		// Max size of stack
+		constexpr size_t MAX_DEPTH = 32 * 2;
+		size_t node_stack[MAX_DEPTH] = {};
+		int64_t curr_stack_size = 0;
+		std::optional<HitRecord> hit = {};
+		size_t hit_obj = {};
+
+		node_stack[0] = 0;
+		while (curr_stack_size >= 0) {
+			auto curr_node_index = node_stack[curr_stack_size];
+			auto const& curr_node = m_flat_tree[curr_node_index];
+
+			--curr_stack_size;
+
+			if (!curr_node.bbox.RayIntersect(_ray, _tmin, _tmax)) {
+				continue;
+			}
+
+			if (curr_node.obj_index.has_value()) {
+				auto curr_hit = _hittables[curr_node.obj_index.value()]->Hit(_ray, _tmin, _tmax);
+				if (!curr_hit.has_value()) {
+					continue;
+				}
+				_tmax = curr_hit->m_t;
+				hit_obj = curr_node.obj_index.value();
+				hit = curr_hit;
+				continue;
+			}
+
+			auto left = curr_node.left;
+			auto right = curr_node.right;
+
+			if (curr_stack_size + 2 >= MAX_DEPTH) {
+				return std::nullopt;
+			}
+
+			node_stack[++curr_stack_size] = right.value();
+			node_stack[++curr_stack_size] = left.value();
+		}
+
+		if (hit.has_value()) {
+			return { {hit.value(), hit_obj} };
+		}
+		
+		return std::nullopt;
+	}
+
 	KDTree::KDTree() :
 		m_flat_tree{},
 		m_world_size{},

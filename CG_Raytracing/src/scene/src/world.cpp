@@ -70,7 +70,7 @@ namespace cg_raytracing::scene {
 		if (!m_kd_tree) {
 			return std::nullopt;
 		}
-		auto hit = m_kd_tree->RayIntersectsSingleObject(_ray, m_objects, _t_min, _t_max);
+		auto hit = m_kd_tree->RayIntersectsSingleObjectIterative(_ray, m_objects, _t_min, _t_max);
 		if (!hit.has_value()) {
 			return std::nullopt;
 		}

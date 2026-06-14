@@ -108,6 +108,19 @@ namespace cg_raytracing::geometry {
 		) const;
 
 		/// <summary>
+		/// Check if a ray intersect one object, e.g. a COMPLETE
+		/// intersection, not only bbox
+		/// </summary>
+		/// <param name="_ray"></param>
+		/// <returns></returns>
+		std::optional<std::pair<HitRecord, size_t>> RayIntersectsSingleObjectIterative(
+			math::Ray const& _ray,
+			std::vector<std::shared_ptr<Hittable>> const& _hittables,
+			float _tmin,
+			float _tmax
+		) const;
+
+		/// <summary>
 		/// Get total number of tracked objects in the BVH
 		/// </summary>
 		/// <returns>Number of objects</returns>
