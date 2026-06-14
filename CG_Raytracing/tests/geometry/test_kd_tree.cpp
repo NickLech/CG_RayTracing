@@ -398,4 +398,92 @@ TEST_CASE("KD Tree tests") {
 			REQUIRE(2 == hit->second);
 		}
 	}
+
+	SECTION("Four object ray intersect (with single object intersect iterative)") {
+		using Cube = cg_raytracing::geometry::Cube;
+		using Hittable = cg_raytracing::geometry::Hittable;
+		using Vec3 = cg_raytracing::math::Vec3;
+		using Ray = cg_raytracing::math::Ray;
+
+		std::vector<std::shared_ptr<Hittable>> objects{};
+		auto material = std::make_shared<cg_raytracing::geometry::StandardMaterial>(
+			cg_raytracing::geometry::StandardMaterial::Diffuse({ 0.5f, 0.5f, 0.5f })
+		);
+		objects.push_back(std::make_shared<Cube>(Vec3(.0f, .0f, .0f), 2.5f, material));
+		objects.push_back(std::make_shared<Cube>(Vec3(10.0f, .0f, .0f), 2.5f, material));
+
+		objects.push_back(std::make_shared<Cube>(Vec3(.0f, .0f, 10.0f), 2.5f, material));
+		objects.push_back(std::make_shared<Cube>(Vec3(10.0f, .0f, 10.0f), 2.5f, material));
+
+		auto kd_tree = cg_raytracing::geometry::KDTree::CreateFromHittables(objects, 50.f);
+
+		// Middle between 0 and 1 towards nothing
+		auto hit = kd_tree.RayIntersectsSingleObjectIterative(Ray(Vec3(5.0f, 0.0f, 0.0f), Vec3(.0f, .0f, 1.f)),
+			objects, Hittable::TMIN, Hittable::TMAX);
+		REQUIRE(hit.has_value() == false);
+		// Before 0 towards 0 and 1
+		hit = kd_tree.RayIntersectsSingleObjectIterative(Ray(Vec3(-5.0f, 0.0f, 0.0f), Vec3(1.0f, .0f, .0f)),
+			objects, Hittable::TMIN, Hittable::TMAX);
+		REQUIRE(hit.has_value() == true);
+		if (hit.has_value()) {
+			REQUIRE(0 == hit->second);
+		}
+		// // Before 2 towards 2 and 3
+		hit = kd_tree.RayIntersectsSingleObjectIterative(Ray(Vec3(-5.0f, 0.0f, 10.0f), Vec3(1.0f, .0f, .0f)),
+			objects, Hittable::TMIN, Hittable::TMAX);
+		REQUIRE(hit.has_value() == true);
+		if (hit.has_value()) {
+			REQUIRE(2 == hit->second);
+		}
+
+		hit = kd_tree.RayIntersectsSingleObjectIterative(Ray(Vec3(0.0f, 0.0f, -5.0f), Vec3(.0f, .0f, 1.0f)),
+			objects, Hittable::TMIN, Hittable::TMAX);
+		REQUIRE(hit.has_value() == true);
+		if (hit.has_value()) {
+			REQUIRE(0 == hit->second);
+		}
+
+		hit = kd_tree.RayIntersectsSingleObjectIterative(Ray(Vec3(10.0f, 0.0f, -5.0f), Vec3(.0f, .0f, 1.0f)),
+			objects, Hittable::TMIN, Hittable::TMAX);
+		REQUIRE(hit.has_value() == true);
+		if (hit.has_value()) {
+			REQUIRE(1 == hit->second);
+		}
+
+		// // Same as above, but opposite direction, reversed object order
+		hit = kd_tree.RayIntersectsSingleObjectIterative(Ray(Vec3(10.0f, 0.0f, 15.0f), Vec3(.0f, .0f, -1.0f)),
+			objects, Hittable::TMIN, Hittable::TMAX);
+		REQUIRE(hit.has_value() == true);
+		if (hit.has_value()) {
+			REQUIRE(3 == hit->second);
+		}
+
+		hit = kd_tree.RayIntersectsSingleObjectIterative(Ray(Vec3(-5.0f, 0.0f, -5.0f), Vec3(1.0f, .0f, 1.0f)),
+			objects, Hittable::TMIN, Hittable::TMAX);
+		REQUIRE(hit.has_value() == true);
+		if (hit.has_value()) {
+			REQUIRE(0 == hit->second);
+		}
+
+		hit = kd_tree.RayIntersectsSingleObjectIterative(Ray(Vec3(15.0f, 0.0f, 15.0f), Vec3(-1.0f, .0f, -1.0f)),
+			objects, Hittable::TMIN, Hittable::TMAX);
+		REQUIRE(hit.has_value() == true);
+		if (hit.has_value()) {
+			REQUIRE(3 == hit->second);
+		}
+
+		hit = kd_tree.RayIntersectsSingleObjectIterative(Ray(Vec3(15.0f, 0.0f, -5.0f), Vec3(-1.0f, .0f, 1.0f)),
+			objects, Hittable::TMIN, Hittable::TMAX);
+		REQUIRE(hit.has_value() == true);
+		if (hit.has_value()) {
+			REQUIRE(1 == hit->second);
+		}
+
+		hit = kd_tree.RayIntersectsSingleObjectIterative(Ray(Vec3(-5.0f, 0.0f, 15.0f), Vec3(1.0f, .0f, -1.0f)),
+			objects, Hittable::TMIN, Hittable::TMAX);
+		REQUIRE(hit.has_value() == true);
+		if (hit.has_value()) {
+			REQUIRE(2 == hit->second);
+		}
+	}
 }
