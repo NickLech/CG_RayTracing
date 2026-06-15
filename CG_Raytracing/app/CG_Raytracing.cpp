@@ -358,7 +358,7 @@ void HandleKeyDown(
         _light.m_position.x -= 50.0f;
         must_update = true;
         break;
-    */
+    
     case SDL_SCANCODE_C: {
         static int s_current_preset = 0;
         s_current_preset = (s_current_preset + 1) % 3;
@@ -375,6 +375,7 @@ void HandleKeyDown(
         must_update = true;
         break;
     } // don't remove, may cause errors due to variable declaration in switch
+    */
 
     case SDL_SCANCODE_TAB: {
         // Switch between scenes (Tab key)
