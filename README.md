@@ -16,7 +16,6 @@ A CPU-based path tracer written in C++23, rendering scenes in real time to an Op
 - **OBJ mesh loading**
 - **Multi-threaded** rendering via `std::jthread`
 - **Multiple scenes** — switch at runtime with `Tab`
-- **Multiple camera presets** — switch at runtime with `C`
 
 ---
 
@@ -110,7 +109,6 @@ SDL_VIDEODRIVER=x11 ./CG_Raytracing
 | `S`       | Rotate camera down                  |
 | `A`       | Rotate camera left                  |
 | `D`       | Rotate camera right                 |
-| `C`       | Cycle through camera presets        |
 | `Tab`     | Switch between scenes               |
 
 ---
@@ -145,4 +143,3 @@ Render parameters are defined in `config.hpp`:
 | `RENDER_ITERATION` | Number of render iterations        |
 | `MAX_DEPTH`        | Maximum ray bounce depth           |
 | `ASPECT_RATIO`     | Sensor aspect ratio                |
-| `CAMERA_PRESETS`   | Predefined camera positions        |
