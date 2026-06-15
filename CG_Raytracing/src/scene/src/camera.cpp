@@ -53,7 +53,7 @@ Camera::Camera(uint32_t _sensor_size_width, uint32_t _focal_length,
         }
     }
 
-    auto num_threads = std::thread::hardware_concurrency();
+    auto num_threads = std::thread::hardware_concurrency() * 2;
     m_threads.reserve(num_threads);
     for (auto i : std::views::iota(0U, num_threads)) {
         RenderThreadData th_data{};
@@ -111,8 +111,8 @@ void Camera::RenderThreadRenderBlock(RenderThreadData const& _data, RenderParam 
                     auto next_ray = ray;
                     auto bounce_depth = 0U;
 
-                    auto final_color = math::Vec3(1.f, 1.f, 1.f);
-                    auto bg_color    = math::Vec3(.5f, .7f, 1.f);
+                    auto final_color   = math::Vec3(1.f, 1.f, 1.f);
+                    auto bg_color      = math::Vec3(.5f, .7f, 1.f);
 
                     while (true) {
                         auto curr_ray = next_ray;
@@ -126,6 +126,7 @@ void Camera::RenderThreadRenderBlock(RenderThreadData const& _data, RenderParam 
                                                .At(geometry::Hittable::TMIN * 1.01f);
 
                             auto scattered = hit->m_material->Scatter(curr_ray, hit.value());
+                            ++bounce_depth;
 
                             if (!scattered.has_value()) {
                                 // Check if the surface is emissive — if so, accumulate its emission.
@@ -146,17 +147,22 @@ void Camera::RenderThreadRenderBlock(RenderThreadData const& _data, RenderParam 
                             auto [direction, albedo] = scattered.value();
                             final_color = final_color * albedo;
 
-                            if (bounce_depth + 1 >= Config::MAX_DEPTH) {
+                            if (bounce_depth >= Config::MAX_DEPTH) {
                                 final_color = final_color * bg_color;
                                 break;
                             }
-
-                            ++bounce_depth;
+                            
                             next_ray = direction;
                         } else {
-                            final_color = final_color * bg_color;
+                            auto t = .5f + (curr_ray.m_direction.normalized().y + 1.0);
+                            auto ambient_color = math::Vec3(1.0, 1.0, 1.0) * (1.f - t) + math::Vec3(0.5, 0.7, 1.0) * t;
+                            final_color = final_color * ambient_color;
                             break;
                         }
+                    }
+
+                    if (0 == bounce_depth) {
+                        final_color = bg_color;
                     }
 
                     // Clamp to [0,1]

@@ -58,12 +58,12 @@ StandardMaterial::Scatter(const math::Ray &_ray_in,
         float fuzz_amount = (m_ns > 0.0f) ? (1.0f / m_ns) : 0.0f;
         math::Vec3 fuzz = RandomInHemisphere(_hit.m_normal) * fuzz_amount;
         return {
-            {math::Ray{_hit.m_point, (reflected + fuzz).normalized()}, albedo }};
+            {math::Ray{_hit.m_point, (reflected + fuzz).normalized()}, albedo + m_ka }};
     }
 
     // Diffuse: random hemisphere scatter weighted by albedo
     math::Vec3 scatter_dir = RandomInHemisphere(_hit.m_normal);
-    return {{math::Ray{_hit.m_point, scatter_dir}, albedo}};
+    return {{math::Ray{_hit.m_point, scatter_dir}, albedo + m_ka }};
 }
 
 std::optional<std::pair<math::Ray, math::Vec3>>
