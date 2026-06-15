@@ -87,8 +87,15 @@ The executable will be in `build/CG_Raytracing`.
 ```
 
 ### Linux
+With X11
 ```bash
-./build/CG_Raytracing
+cd ./build/bin
+./CG_Raytracing
+```
+With Wayland
+```bash
+cd ./build/bin
+SDL_VIDEODRIVER=x11 ./CG_Raytracing
 ```
 
 > The working directory must be the project root (or wherever the `assets/` folder is), as shaders and meshes are loaded from relative paths. CMake copies the `assets/` folder next to the executable automatically.
