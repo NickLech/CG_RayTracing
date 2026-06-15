@@ -50,17 +50,10 @@ Camera::Camera(uint32_t _sensor_size_width, uint32_t _focal_length,
                 this->m_rays_matrix[(y * this->m_image_width + x) * Config::RAY_PER_PIXEL + ray_index].SetOrigin(
                     this->m_position);
             }
-            //math::Vec3 ray_direction =
-            //    top_left + horizontal_offset * x + vertical_offset * y;
-            //ray_direction.Rotate(this->m_direction);
-            //this->m_rays_matrix[(y * this->m_image_width + x) * Config::RAY_PER_PIXEL].SetDirection(
-            //    ray_direction);
-            //this->m_rays_matrix[(y * this->m_image_width + x) * Config::RAY_PER_PIXEL].SetOrigin(
-            //    this->m_position);
         }
     }
 
-    auto num_threads = std::thread::hardware_concurrency() * 2;
+    auto num_threads = std::thread::hardware_concurrency();
     m_threads.reserve(num_threads);
     for (auto i : std::views::iota(0U, num_threads)) {
         RenderThreadData th_data{};

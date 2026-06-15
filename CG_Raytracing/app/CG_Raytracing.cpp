@@ -210,6 +210,112 @@ cg_raytracing::scene::World BuildScene3() {
     return world;
 }
 
+cg_raytracing::scene::World BuildScene4() {
+    // Demo scene: one sphere per material, equally spaced in a row
+    using World = cg_raytracing::scene::World;
+    using StandardMaterial = cg_raytracing::geometry::StandardMaterial;
+    using DielectricMaterial = cg_raytracing::geometry::DielectricMaterial;
+    using EmissiveMaterial = cg_raytracing::geometry::EmissiveMaterial;
+    using Sphere = cg_raytracing::geometry::Sphere;
+    using Vec3 = cg_raytracing::math::Vec3;
+    using Cube = cg_raytracing::geometry::Cube;
+
+    const float radius = 20.0f;
+    const float spacing = 41.0f; // distance between sphere centers
+    const float z = 100.0f;
+    const float y = 0.0f;
+    // Center the row: 5 spheres, total width = 4 * spacing
+    const float x_start = -2.0f * spacing;
+
+    auto world = World::CreateEmpty(5000.f);
+
+    auto ground_material = std::make_shared<StandardMaterial>(StandardMaterial::Diffuse(Vec3(.5f, .5f, .5f)));
+    world.AddObject(std::make_shared<Cube>(Vec3(.0f, 1000.f, .0f), 1000.f, ground_material));
+
+    auto material1 = std::make_shared<DielectricMaterial>(DielectricMaterial::Create(1.5f, Vec3(1.f, 1.f, 1.f)));
+    auto material2 = std::make_shared<StandardMaterial>(StandardMaterial::Diffuse(Vec3(.8f, .2f, .1f), Vec3(.2f, .2f, .2f)));
+    auto material3 = std::make_shared<StandardMaterial>(StandardMaterial::Metal(Vec3(.8f, .8f, .8f), Vec3(1.f, 1.f, 1.f), 1000.f));
+
+    world.AddObject(std::make_shared<Sphere>(Vec3(.0f, -20.f, .0f), 20.f, material1));
+    world.AddObject(std::make_shared<Sphere>(Vec3(-40.0f, -20.f, .0f), 20.f, material2));
+    world.AddObject(std::make_shared<Sphere>(Vec3(40.0f, -20.f, .0f), 20.f, material3));
+
+    {
+        auto material4 = std::make_shared<StandardMaterial>(StandardMaterial::Diffuse(Vec3(.2f, .8f, .2f), Vec3(.4f, .4f, .4f)));
+        world.AddObject(std::make_shared<Sphere>(Vec3(-10.f, -5.f, -30.f), 5.f, material4));
+
+        auto material5 = std::make_shared<StandardMaterial>(StandardMaterial::Diffuse(Vec3(.2f, .2f, .8f), Vec3(.4f, .4f, .4f)));
+        world.AddObject(std::make_shared<Sphere>(Vec3(10.f, -5.f, 30.f), 5.f, material5));
+
+        auto material6 = std::make_shared<StandardMaterial>(StandardMaterial::Diffuse(Vec3(.8f, .8f, .3f), Vec3(.5f, .5f, .5f)));
+        world.AddObject(std::make_shared<Sphere>(Vec3(0.f, -5.f, 60.f), 5.f, material6));
+
+        auto material7 = std::make_shared<StandardMaterial>(StandardMaterial::Diffuse(Vec3(.8f, .2f, .8f), Vec3(.5f, .5f, .5f)));
+        world.AddObject(std::make_shared<Sphere>(Vec3(20.f, -5.f, 60.f), 5.f, material7));
+
+        auto material8 = std::make_shared<StandardMaterial>(StandardMaterial::Diffuse(Vec3(.8f, .2f, .8f), Vec3(.5f, .5f, .5f)));
+        world.AddObject(std::make_shared<Sphere>(Vec3(-20.f, -5.f, 60.f), 5.f, material8));
+
+        auto material9 = std::make_shared<StandardMaterial>(StandardMaterial::Diffuse(Vec3(.8f, .5f, .5f), Vec3(.5f, .5f, .5f)));
+        world.AddObject(std::make_shared<Sphere>(Vec3(-10.f, -5.f, 90.f), 5.f, material9));
+
+        auto material10 = std::make_shared<StandardMaterial>(StandardMaterial::Diffuse(Vec3(.5f, .9f, .5f), Vec3(.5f, .5f, .5f)));
+        world.AddObject(std::make_shared<Sphere>(Vec3(5.f, -5.f, 120.f), 5.f, material10));
+
+        auto material11 = std::make_shared<StandardMaterial>(StandardMaterial::Metal(Vec3(.8f, .8f, .8f), Vec3(1.f, 1.f, 1.f), 10.f));
+        world.AddObject(std::make_shared<Sphere>(Vec3(-60.f, -10.f, -35.f), 10.f, material11));
+
+        auto material12 = std::make_shared<DielectricMaterial>(DielectricMaterial::Create(1.02f, Vec3(.5f, .9f, .9f)));
+        world.AddObject(std::make_shared<Sphere>(Vec3(-30.f, -5.f, -40.f), 5.f, material12));
+
+        auto material13 = std::make_shared<StandardMaterial>(StandardMaterial::Diffuse(Vec3(1.f, 1.f, .5f), Vec3(.5f, .5f, .5f)));
+        world.AddObject(std::make_shared<Sphere>(Vec3(-40.f, -5.f, -50.f), 5.f, material13));
+
+        auto material14 = std::make_shared<StandardMaterial>(StandardMaterial::Diffuse(Vec3(.0f, 1.f, 1.f), Vec3(.5f, .5f, .5f)));
+        world.AddObject(std::make_shared<Sphere>(Vec3(40.f, -5.f, -50.f), 5.f, material14));
+
+        auto material15 = std::make_shared<DielectricMaterial>(DielectricMaterial::Create(0.9f, Vec3(.9f, .9f, .9f)));
+        world.AddObject(std::make_shared<Sphere>(Vec3(20.f, -5.f, -45.f), 5.f, material15));
+    }
+
+    auto light_mat = std::make_shared<EmissiveMaterial>(EmissiveMaterial::Create(Vec3(1.f, 1.f, .3f), 2000.f));
+    world.AddObject(std::make_shared<Sphere>(Vec3(.0f, -75.f, .0f), 15.f, light_mat));
+
+    world.UpdateTree();
+
+    /*
+    for (int a = -11; a < 11; a++) {
+        for (int b = -11; b < 11; b++) {
+            auto choose_mat = random_double();
+            point3 center(a + 0.9*random_double(), 0.2, b + 0.9*random_double());
+
+            if ((center - point3(4, 0.2, 0)).length() > 0.9) {
+                shared_ptr<material> sphere_material;
+
+                if (choose_mat < 0.8) {
+                    // diffuse
+                    auto albedo = color::random() * color::random();
+                    sphere_material = make_shared<lambertian>(albedo);
+                    world.add(make_shared<sphere>(center, 0.2, sphere_material));
+                } else if (choose_mat < 0.95) {
+                    // metal
+                    auto albedo = color::random(0.5, 1);
+                    auto fuzz = random_double(0, 0.5);
+                    sphere_material = make_shared<metal>(albedo, fuzz);
+                    world.add(make_shared<sphere>(center, 0.2, sphere_material));
+                } else {
+                    // glass
+                    sphere_material = make_shared<dielectric>(1.5);
+                    world.add(make_shared<sphere>(center, 0.2, sphere_material));
+                }
+            }
+        }
+    }
+    */
+
+    return world;
+}
+
 // function to move the camera around. Probably in the future is better to move
 // this in another file and optimize it
 void HandleKeyDown(
@@ -294,7 +400,7 @@ void HandleKeyDown(
 int main() {
     using Camera = cg_raytracing::scene::Camera;
     std::unique_ptr<Camera> my_camera = std::make_unique<Camera>();
-    my_camera->Translate(cg_raytracing::math::Vec3(.0f, -10.f, -50.0f));
+    my_camera->Translate(cg_raytracing::math::Vec3(.0f, -30.f, -200.0f));
 
     if (!SDL_Init(SDL_INIT_VIDEO)) {
         std::println(std::cout, "SDL_Init error: {}", SDL_GetError());
@@ -426,7 +532,7 @@ int main() {
                    1, Config::IMAGE_WIDTH, Config::IMAGE_HEIGHT,
                    cg_raytracing::TextureFormat::RGB8)
                    .value();
-    tex.SetUpscaleFilter(cg_raytracing::SamplerFilter::NEAREST);
+    tex.SetUpscaleFilter(cg_raytracing::SamplerFilter::LINEAR);
     tex.SetDownscaleFilter(cg_raytracing::SamplerFilter::LINEAR);
 
     using Hittable = cg_raytracing::geometry::Hittable;
@@ -444,7 +550,8 @@ int main() {
     scenes.push_back(BuildScene1());
     scenes.push_back(BuildScene2());
     scenes.push_back(BuildScene3());
-    int current_scene = 2;
+    scenes.push_back(BuildScene4());
+    int current_scene = 3;
 
     auto begin = std::chrono::system_clock::now();
 
