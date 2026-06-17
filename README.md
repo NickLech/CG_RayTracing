@@ -116,20 +116,14 @@ SDL_VIDEODRIVER=x11 ./CG_Raytracing
 ## Scenes
 
 ### Scene 1 — Main Scene
-A table mesh with a glass sphere, two emissive light sources, a diffuse sphere, and a cube.
+This scene showcases the different materials and features implemented. We have a bunch of spheres with different materials and colors and then there is the floor which is a mesh loaded from a .obj which is associated with a .mtl file for the material and a .jpg file for the texture.
+
+<img src="./readme_assets/scene_1.jpg" alt="drawing" width="50%"/>
 
 ### Scene 2 — Material Showcase
-Five spheres in a row, one for each material type, equally spaced:
+Similar to the previous one, but with a flat surface to better show how the different materials interact with light.
 
-| Position | Material              |
-|----------|-----------------------|
-| 1st      | Diffuse (blue)        |
-| 2nd      | Metal, sharp (red)    |
-| 3rd      | Emissive (orange)     |
-| 4th      | Dielectric (glass)    |
-| 5th      | Metal, rough (gold)   |
-
----
+<img src="./readme_assets/scene_2.jpg" alt="drawing" width="50%"/>
 
 ## Configuration
 
